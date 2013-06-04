@@ -40,7 +40,7 @@ printf "\nConfiguration done. Writing make file ... "
 
 printf "CC=gcc
 GCC=\$(CC)
-CFLAGS=-c -Wall -I ../
+CFLAGS=-c -Wall
 
 SRC=*.c
 OBJ=*.o
