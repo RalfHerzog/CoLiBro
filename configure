@@ -1,0 +1,58 @@
+#!/bin/bash
+
+array=(sqlite3 zlib polarssl math)
+libpath="/usr/include/"
+libpath_end=".h"
+for x in ${array[*]}
+do
+  printf "Checking for %s installed ... " $x
+
+  lib_array=$(echo `whereis $x` | tr " " "\n")
+  present=0
+
+  for package in ${lib_array[*]}
+  do
+    if [ "$package" == $libpath$x$libpath_end ]
+    then
+      present=1
+    fi
+  done
+
+  for package in ${lib_array[*]}
+  do
+    if [ "$package" == $libpath$x ]
+    then
+      present=1
+    fi
+  done
+
+  if [ $present -eq 0 ]
+  then
+    printf "no\n"
+    printf "\nPlease install '%s' library developer files\n" $x
+    exit
+  else
+    printf "ok\n"
+  fi
+done
+
+printf "\nConfiguration done. Writing make file ... "
+
+printf "CC=gcc
+GCC=\$(CC)
+CFLAGS=-c -Wall -I ../
+
+SRC=*.c
+OBJ=*.o
+
+all: 
+	\$(GCC) \$(CFLAGS) \$(SRC)
+	ar cr libcolibro.a \$(OBJ)
+clean:
+	rm *.o -f
+" > Makefile
+
+printf "done\n"
+printf "\nRun 'make' now\n"
+
+exit
