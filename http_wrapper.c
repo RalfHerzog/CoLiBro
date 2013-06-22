@@ -613,11 +613,13 @@ void http_query( struct HTTP* http )
     }
     return;
   }
+
   if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
   {
     printf("Sending... %.4s [ %s ]", query, http->header->remoteFile );
     fflush( stdout );
   }
+
   http_raw_send( http, query, size );
   if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
   {
@@ -1423,6 +1425,7 @@ void http_parse_link( struct HTTP* http )
     strcat( remoteFile, "?" );
     strcat( remoteFile, link_info.parameters );
   }
+
   if ( !strcmpi( link_info.protocol, "https" ) )
   {
     http->connect_func = &http_ssl_connect;
@@ -1437,6 +1440,7 @@ void http_parse_link( struct HTTP* http )
     }
     http->port = HTTP_SSL_PORT;
   }
+
   if ( !strcmpi( link_info.protocol, "http" ) )
   {
     http->connect_func = &http_raw_connect;
@@ -1458,11 +1462,13 @@ void http_parse_link( struct HTTP* http )
       http->port = HTTP_PORT;
     }
   }
+
   if ( *remoteFile == '\0' )
   {
     free( remoteFile );
     remoteFile = NULL;
   }
+
   if ( strcmpi( http->server, link_info.host ) )
   {
     http_set_opt( http, HTTP_OPTION_HOST_CHANGED, 1 );

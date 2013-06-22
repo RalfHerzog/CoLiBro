@@ -339,7 +339,7 @@ void http_get_link_info ( struct HTTP* http, struct HTTP_LINK_INFO* http_info, c
   }
   else
   {
-    if ( http->port == 80 )
+    if ( http->port == 80 || http->port == 0 )
     {
       sProtocol = new_string( "http" );
     }
