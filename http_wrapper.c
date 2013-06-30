@@ -526,8 +526,15 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
       http->error.file = __FILE__;
       return;
     }
-    strcat( *query, "Content-Type: application/x-www-form-urlencoded" );
-    strcat( *query, HTTP_HEADER_NEWLINE );
+
+    if ( !http_get_opt( http, HTTP_OPTION_NO_HTML_FORM_POST ) )
+    {
+      strcat( *query, "Content-Type: application/x-www-form-urlencoded" );
+      strcat( *query, HTTP_HEADER_NEWLINE );
+    } else if ( !strncmpi( http->header->postData, "<?xml", 5 ) ) {
+      strcat( *query, "Content-Type: text/xml;charset=utf-8" );
+      strcat( *query, HTTP_HEADER_NEWLINE );
+    }
 
     post_data_encoded = http_post_encode( http->header->postData );
     free( http->header->postData );

@@ -1,9 +1,20 @@
 #include "html_utils.h"
 
+int html_min( int a, int b )
+{
+  return a < b ? a : b;
+}
+
+int html_max( int a, int b )
+{
+  return a < b ? b : a;
+}
+
 void html_list_create( struct HTML_TAG* start, struct HTML_TAG* end, const char* name, struct HTML_LIST** list )
 {
   struct HTML_TAG* currentTag;
   struct HTML_LIST* listElement;
+  int nameLength = 0;
 
   if ( start == NULL )
   {
@@ -18,13 +29,14 @@ void html_list_create( struct HTML_TAG* start, struct HTML_TAG* end, const char*
   currentTag = start;
   while( currentTag != end && currentTag->next != NULL )
   {
-    if ( !strcmpi( currentTag->name, name ) )
+    nameLength = html_max( my_strlen( currentTag->name ), my_strlen( name ) );
+    if ( !strncmpi( currentTag->name, name, nameLength ) )
     {
       listElement->tag = currentTag;
       listElement->next = (struct HTML_LIST*)malloc( sizeof( struct HTML_LIST ) );
+      memset( listElement->next, 0, sizeof( struct HTML_LIST ) );
 
       listElement = listElement->next;
-      memset( listElement, 0, sizeof( struct HTML_LIST ) );
     }
     currentTag = currentTag->next;
   }

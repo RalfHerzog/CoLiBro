@@ -12,6 +12,8 @@ struct HTML_LIST{
   struct HTML_LIST* next;
 };
 
+int html_min( int a, int b );
+int html_max( int a, int b );
 void html_list_create( struct HTML_TAG* start, struct HTML_TAG* end, const char* name, struct HTML_LIST** list );
 void html_list_free( struct HTML_LIST* list );
 void html_escape_string( char** sPostData );
