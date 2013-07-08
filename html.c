@@ -74,6 +74,8 @@ void html_parse( struct HTML* html, const char* content )
   }while( 1 );
 
   current = current->prev;
+  html->endTag = current;
+
   while( current != NULL )
   {
     if ( *current->name == '/' )
@@ -129,7 +131,7 @@ void html_parse( struct HTML* html, const char* content )
     }
     current = current->next;
   }
-  
+
   if ( html_get_opt( html, HTML_OPTION_CHARSET ) == 1 )
   {
     html_check_charset( html );
@@ -139,7 +141,7 @@ void html_check_charset( struct HTML* html )
 {
   struct HTML_LIST *list, *list_it;
   char* field, *charset;
-  
+
   html_list_create( html->tags, NULL, "meta", &list );
   HTML_LIST_FOREACH( list, list_it )
   {
@@ -205,11 +207,11 @@ void html_apply_charset_utf8( struct HTML* html )
     D_MINUS = '-',
     D_QUOTE = '\"'
   };
-  
+
   struct HTML_TAG *tag_it;
   long count;
   char *c;
-  
+
   HTML_TAG_FOREACH( html->tags, tag_it )
   {
     if ( tag_it->textLength > 0 )
@@ -247,23 +249,40 @@ unsigned char html_get_opt( struct HTML* html, enum HTML_OPTIONS option )
 {
   return ( html->options & ( 1<<option ) ) ? 1 : 0;
 }
+
 void html_free_tags( struct HTML_TAG* tag )
 {
+  struct HTML_TAG* tagIt;
+
   if ( tag == NULL )
   {
     return;
   }
-  html_free_tags( tag->next );
-  free( tag->name );        tag->name         = NULL;
-  free( tag->parameter );   tag->parameter    = NULL;
-  free( tag->param_name );  tag->param_name   = NULL;
-  free( tag->param_value ); tag->param_value  = NULL;
-  free( tag->param_id );    tag->param_id     = NULL;
-  free( tag->next );        tag->next         = NULL;
+  tagIt = tag;
+  while( tagIt != NULL )
+  {
+    free( tagIt->name );        tagIt->name         = NULL;
+    free( tagIt->parameter );   tagIt->parameter    = NULL;
+    free( tagIt->param_name );  tagIt->param_name   = NULL;
+    free( tagIt->param_value ); tagIt->param_value  = NULL;
+    free( tagIt->param_id );    tagIt->param_id     = NULL;
+    free( tagIt->next );        tagIt->next         = NULL;
+
+    tagIt = tagIt->prev;
+
+    if ( tagIt != NULL )
+    {
+      free( tagIt->next );
+      tagIt->next = NULL;
+    }
+  }
+
+
 }
+
 void html_free( struct HTML* html )
 {
-  html_free_tags( html->tags );
-  free( html->tags );
-  free( html->content );
+  html_free_tags( html->endTag );
+  free( html->tags );     html->tags = NULL;
+  free( html->content );  html->content = NULL;
 }

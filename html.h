@@ -18,6 +18,7 @@ struct HTML{
   unsigned long options;
   char* content;
   struct HTML_TAG* tags;
+  struct HTML_TAG* endTag;
 };
 
 void html_init( struct HTML* html );
