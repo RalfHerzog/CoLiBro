@@ -550,7 +550,7 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   if ( !strcmpi( http->header->method, "POST" ) )
   {
     strcat( *query, http->header->postData );
-    //free( http->header->postData );
+    free( http->header->postData );
     http->header->postData = NULL;
   }
   free( http->header->method );
