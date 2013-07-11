@@ -9,14 +9,14 @@ int http_header_cookie_validate_expires( const char* cookie )
 {
   regex_t regex;
   int ret;
-  
+
   if ( cookie == NULL )
   {
     return REG_NOMATCH;
   }
   ret = regcomp(&regex, "(Mon|Tue|Wed|Thu|Fri|Sat|Sun), ([0-2][0-9]|[3][0-1])-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-[1-2][0-9]{3} ([0-9]|[0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9] GMT", REG_EXTENDED);
   ret = regexec(&regex, cookie, 0, NULL, 0);
-  
+
   regfree(&regex);
   return ret;
 }
@@ -25,7 +25,7 @@ void http_header_cookie_sqlite_expires_date_convert_month( const char* month_nam
 {
   unsigned char i;
   char* months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-  
+
   for ( i = 0 ; i < ( sizeof( months ) / sizeof( char* ) ) ; i++ )
   {
     if ( !strcmp( months[i], month_name ) )
@@ -39,11 +39,11 @@ void http_header_cookie_sqlite_expires_date_convert_month( const char* month_nam
 }
 void http_header_cookie_sqlite_expires_date( const char* date_str, char** sqlite_date )
 {
-  char* ptr, *day, *month, *year, *month_dec;
+  char* ptr, *day = NULL, *month = NULL, *year = NULL, *month_dec = NULL;
   unsigned char count;
-  
+
   *sqlite_date = (char*)malloc( strlen( date_str ) );
-  
+
   ptr = strtok( (char*)date_str, "-" );
   for ( count = 0 ; ptr != NULL ; count++ )
   {
@@ -64,12 +64,12 @@ void http_header_cookie_sqlite_expires_date( const char* date_str, char** sqlite
   }
   http_header_cookie_sqlite_expires_date_convert_month( month, &month_dec );
   sprintf( *sqlite_date, "%s-%s-%s", year, month_dec, day );
-  
+
   free( day );
   free( month );
   free( year );
   free( month_dec );
-  
+
   return;
 }
 void http_header_cookie_sqlite_expires( const char* exp_str, char** sqlite_str )
@@ -77,17 +77,17 @@ void http_header_cookie_sqlite_expires( const char* exp_str, char** sqlite_str )
   char* exp_str_date;
   char* sqlite_date, *sqlite_time;
   unsigned int size;
-  
+
   exp_str_date = new_string_num( exp_str + 5, 11 );
 
   http_header_cookie_sqlite_expires_date( exp_str_date, &sqlite_date );
   sqlite_time = new_string_num( exp_str + 17, 8 );
-  
+
   size = strlen( sqlite_date ) + 1 + strlen( sqlite_time );
   *sqlite_str = (char*)malloc( size + 1);
-  
+
   sprintf( *sqlite_str, "%s %s", sqlite_date, sqlite_time );
-  
+
   free( sqlite_date );
   free( sqlite_time );
 }
@@ -95,10 +95,10 @@ void http_header_cookie_sqlite_expires( const char* exp_str, char** sqlite_str )
 void http_sqlite_cookie_server( const char* server, char** sqlite_server )
 {
   int i, count_total;
-  
+
   i = strlen( server ) - 1;
   count_total = 2;
-  
+
   for ( ; i >= 0 && count_total > 0 ; i-- )
   {
     if ( server[i] == '.' )
@@ -111,7 +111,7 @@ void http_sqlite_cookie_server( const char* server, char** sqlite_server )
     if ( server[i] == '.' )
       count_total++;
   }
-  
+
   count_sub = count_total - 1;
   for ( i = 0 ; server[i] != '\0' && count_sub > 0 ; i++ )
   {
@@ -125,10 +125,10 @@ void http_sqlite_cookie_path( const char* path, char** sqlite_path )
 {
   //char* ptr;
   //int pos;
-  
+
   *sqlite_path = new_string( "/" );
   return;
-  
+
   /*ptr = strrchr( path, '/' );
   if( ptr == NULL )
   {
@@ -139,21 +139,21 @@ void http_sqlite_cookie_path( const char* path, char** sqlite_path )
   *sqlite_path = new_string_num( path, pos );*/
 }
 
-unsigned char http_header_cookie_user_add( struct HTTP* http, 
+unsigned char http_header_cookie_user_add( struct HTTP* http,
   const char* name, const char* value, const char* domain, const char* path,
   const char* expires, unsigned char secure, unsigned char http_only )
 {
   char* cookieStr;
-  
+
   if ( name == NULL )
   {
     return 0;
   }
   cookieStr = (char*)malloc( 1024 );
   memset( cookieStr, 0, 1024 );
-  
+
   sprintf( cookieStr, "Set-Cookie: %s=%s; ", name, ( value == NULL ) ? "" : value );
-  
+
   strcat( cookieStr, "Domain=" );
   if ( domain )
   {
@@ -171,7 +171,7 @@ unsigned char http_header_cookie_user_add( struct HTTP* http,
     }
   }
   strcat( cookieStr, "; " );
-  
+
   strcat( cookieStr, "Path=" );
   if ( path )
   {
@@ -182,20 +182,20 @@ unsigned char http_header_cookie_user_add( struct HTTP* http,
     strcat( cookieStr, "/" );
   }
   strcat( cookieStr, "; " );
-  
+
   if ( expires )
   {
     strcat( cookieStr, "Expires=" );
     strcat( cookieStr, expires );
     strcat( cookieStr, "; " );
   }
-  
+
   if ( secure )
   {
     strcat( cookieStr, "Secure" );
     strcat( cookieStr, "; " );
   }
-  
+
   if ( http_only )
   {
     strcat( cookieStr, "HttpOnly" );
@@ -219,7 +219,7 @@ void http_header_cookie_add( struct HTTP* http, const char* line )
   http_header_cookie_get_data( line, HTTP_COOKIE_EXPIRES,   &currentCookie->expires,  &currentSize );
   http_header_cookie_get_data( line, HTTP_COOKIE_SECURE,    &currentCookie->secure,  &currentSize );
   http_header_cookie_get_data( line, HTTP_COOKIE_HTTP_ONLY, &currentCookie->http_only,  &currentSize );
-  
+
   if ( currentCookie->path == NULL )
   {
     currentCookie->path = new_string( "/" );
@@ -270,11 +270,11 @@ void http_header_cookie_get_data( const char* line, enum HTTP_COOKIE_FIELD cooki
     return;
   }
   sizeTotal = strlen( line );
-  
+
   http_header_cookie_get_tokens( cookieField, &field, &tokBeg, &tokEnd );
-  
+
   ptr = ( field == NULL ) ? (char*)line : stristr( line, field );
-  
+
   if ( ptr == NULL )
   {
     *size = 0;
@@ -288,14 +288,14 @@ void http_header_cookie_get_data( const char* line, enum HTTP_COOKIE_FIELD cooki
     *(*sValue+1) = '\000';
     return;
   }
-  
+
   valueStart = strchr( ptr, tokBeg ) + 1;
   valueEnd = strchr( ptr, tokEnd );
   if ( valueEnd == NULL )
   {
     valueEnd = ptr + strlen(ptr);
   }
-  
+
   i = valueEnd - valueStart;
   if ( i <= sizeTotal )
   {
@@ -313,7 +313,7 @@ void http_header_cookie_get_data( const char* line, enum HTTP_COOKIE_FIELD cooki
 void http_header_cookie_get_tokens( enum HTTP_COOKIE_FIELD cookieField, char** field, char* tokBeg, char* tokEnd )
 {
   *field = NULL;
-  
+
   *tokBeg = '=';
   *tokEnd = ';';
   switch( cookieField )

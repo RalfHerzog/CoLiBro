@@ -44,10 +44,11 @@ struct HTML_TAG{
   struct HTML_TAG* next;
 };
 
-void html_tag_init( struct HTML* html, const char* content, struct HTML_TAG** tag );
-void html_tag_override_input( struct HTML* html, struct HTML_TAG* tagForm, unsigned char count, ... );
-void html_tag_generate_post( struct HTML_TAG* tagForm, char** postData );
-void html_tag_get_parameter_field( const char* parameter, const char* field, char** data, unsigned int* size );
+void  html_tag_init( struct HTML* html, const char* content, struct HTML_TAG** tag );
+void  html_tag_override_input( struct HTML* html, struct HTML_TAG* tagForm, unsigned char count, ... );
+void  html_tag_generate_post( struct HTML_TAG* tagForm, char** postData );
+void  html_tag_get_parameter_field( const char* parameter, const char* field, char** data, unsigned int* size );
+char* html_tag_get_content( struct HTML* html, struct HTML_TAG* tag );
 
 /** External function export */
 extern void html_tag_alloc( struct HTML_TAG** tag, struct HTML_TAG* prev );

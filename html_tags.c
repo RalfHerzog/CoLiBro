@@ -262,3 +262,19 @@ void html_tag_override_input( struct HTML* html, struct HTML_TAG* tagForm, unsig
 
   html_list_free( list );
 }
+
+char* html_tag_get_content( struct HTML* html, struct HTML_TAG* tag )
+{
+  char* content = NULL;
+
+  if ( tag->textLength == 0 )
+  {
+    return NULL;
+  }
+
+  content = (char*)malloc( tag->textLength + 1 );
+  memcpy( content, html->content + tag->textStart, tag->textLength );
+  memset( content + tag->textLength, 0, 1 );
+
+  return content;
+}

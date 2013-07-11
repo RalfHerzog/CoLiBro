@@ -287,14 +287,9 @@ void http_set_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option, ... )
   }
   http->lastResult = 0;
 
-  switch( option )
-  {
-    default:
-      va_start( tags, option );
-      value = va_arg( tags, unsigned int* );
-      va_end( tags );
-      break;
-  }
+  va_start( tags, option );
+  value = va_arg( tags, unsigned int* );
+  va_end( tags );
 
   if ( value == (void*)0x00 || value == (void*)0x01  )
   {
@@ -555,7 +550,7 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   if ( !strcmpi( http->header->method, "POST" ) )
   {
     strcat( *query, http->header->postData );
-    free( http->header->postData );
+    //free( http->header->postData );
     http->header->postData = NULL;
   }
   free( http->header->method );
@@ -568,7 +563,7 @@ void http_log_write( struct HTTP* http, const char* str, unsigned int mode )
 {
   FILE* fFile;
 
-  if ( !http_get_opt( http, HTTP_OPTION_LOG_WRITE ) )
+  if ( !http_get_opt( http, HTTP_OPTION_LOG_ENABLED ) )
   {
     return;
   }
@@ -850,7 +845,7 @@ void http_recv_unknown_size( struct HTTP* http, char** content, int* size )
   struct HTTP_LIST* list;
   struct HTTP_LIST* currentList;
   char* str;
-  int bytesRead;
+  int bytesRead = 0;
   int bytesReadTotal;
   int sizeTotal;
 
@@ -1130,6 +1125,11 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
   if ( http_get_opt( http, HTTP_OPTION_CONNETION_CLOSE_AFTER_TRANSMISSION ) )
   {
     http->close_func( http );
+  }
+
+  if ( http_get_opt( http, HTTP_OPTION_LOG_ENABLED ) && http_get_opt( http, HTTP_OPTION_LOG_RESPONSE ) )
+  {
+    http_log_write( http, content, 1 );
   }
 
   *pContent = content;
@@ -1499,6 +1499,11 @@ void http_get_page( struct HTTP* http, const char* link, char** content, int* si
     return;
   }
 
+  if ( http_get_opt( http, HTTP_OPTION_LOG_ENABLED ) == 1 && http_get_opt( http, HTTP_OPTION_LOG_OVERWRITE ) == 1 )
+  {
+    remove( "log.txt" );
+  }
+
   free( http->header->originalQuery );
   http->header->originalQuery = new_string( link );
 
@@ -1553,7 +1558,7 @@ void http_save_data_to_file( struct HTTP* http, const char* file )
   const int mem_size = 1024;
 
   char* content;
-  int size_left_to_recv, size_tmp;
+  int size_left_to_recv, size_tmp = 0;
   FILE* fFile;
 
   if ( http->error.errorId != 0 )
