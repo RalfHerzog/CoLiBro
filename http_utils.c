@@ -107,12 +107,12 @@ int xtoi( const char* hex )
 char* itox( const unsigned short value )
 {
   char* result;
-  
+
   if ( value == 0 )
   {
     return new_string( "00" );
   }
-  
+
   result = (char*)malloc( 5 );
   memset( result, 0, 5 );
   sprintf( result, "%X", (unsigned short)value );

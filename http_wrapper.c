@@ -346,8 +346,8 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
 
   *size = 0;
 
-  *query = (char*)malloc( 16*1024 );
-  memset( *query, 0, 16*1024 );
+  *query = (char*)malloc( 64*1024 );
+  memset( *query, 0, 64*1024 );
 
   /** Method */
   if ( http->header->method == NULL )
