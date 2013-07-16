@@ -118,11 +118,7 @@ void html_replace_special_chars( const char* input, char** output )
 
   for ( i = 0, j = 0 ; i < length ; i++ )
   {
-    if ( *(input+i) < 0x20 || *(input+i) > 0x7E )
-    {
-      i++;
-    }
-    else if ( *(input+i) == '&' )
+    if ( *(input+i) == '&' )
     {
       found = 0;
 
