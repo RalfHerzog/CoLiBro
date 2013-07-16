@@ -522,6 +522,7 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
       return;
     }
 
+    /** Add more magic number types here */
     if ( !strncmpi( http->header->postData, "<?xml", 5 ) )
     {
       strcat( *query, "Content-Type: text/xml;charset=utf-8" );
@@ -531,13 +532,13 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
     {
       strcat( *query, "Content-Type: application/x-www-form-urlencoded" );
       strcat( *query, HTTP_HEADER_NEWLINE );
+
+      post_data_encoded = http_post_encode( http->header->postData );
+      free( http->header->postData );
+
+      http->header->postData = post_data_encoded;
+      post_data_encoded = NULL;
     }
-
-    post_data_encoded = http_post_encode( http->header->postData );
-    free( http->header->postData );
-
-    http->header->postData = post_data_encoded;
-    post_data_encoded = NULL;
 
     strcat( *query, "Content-Length: " );
     strcat( *query, my_itoa( my_strlen( http->header->postData ) ) );
@@ -567,7 +568,7 @@ void http_log_write( struct HTTP* http, const char* str, unsigned int mode )
   {
     return;
   }
-  fFile = fopen( "log.txt", "a+" );
+  fFile = fopen( HTTP_LOG_FILE, "a+" );
   if ( fFile != NULL )
   {
     fprintf( fFile, "%s%s\n", str, mode==1?"\n\n":"" );
@@ -1501,7 +1502,7 @@ void http_get_page( struct HTTP* http, const char* link, char** content, int* si
 
   if ( http_get_opt( http, HTTP_OPTION_LOG_ENABLED ) == 1 && http_get_opt( http, HTTP_OPTION_LOG_OVERWRITE ) == 1 )
   {
-    remove( "log.txt" );
+    remove( HTTP_LOG_FILE );
   }
 
   free( http->header->originalQuery );

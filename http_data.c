@@ -69,7 +69,7 @@ char* http_post_encode( const char* postData )
     list_it = list_it->next;
   }
   memcpy( post_encoded+index_enc, postData+old_pos, length_orig-old_pos );
-  index_enc += length_orig-old_pos+1;
+  index_enc += length_orig-old_pos;
   memset( post_encoded+index_enc, 0, 1 );
 
   free( encoded_str );

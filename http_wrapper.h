@@ -31,6 +31,8 @@
 #define HTTP_HEADER_NEWLINE "\r\n\0"
 #define HTTP_HEADER_NUM_EOL 2
 
+#define HTTP_LOG_FILE "log.txt"
+
 #define HTTP_VERSION "0.1"
 
 #define HTTP_KEY_BACKSPACE 127
