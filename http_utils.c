@@ -155,7 +155,8 @@ unsigned int my_strlen( const char* str )
 char* my_itoa( const unsigned long count )
 {
   char* tmp;
-  tmp = (char*)malloc( 10 );
+  tmp = (char*)malloc( 11 );
+  memset( tmp, 0, 11 );
   sprintf( tmp, "%lu", count );
   return tmp;
 }
