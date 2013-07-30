@@ -6,6 +6,10 @@
 struct HTTP;
 struct HTTP_COOKIE;
 
+#ifndef HTTP_REG_NOERROR
+#define HTTP_REG_NOERROR 0
+#endif
+
 #define SAVE_CHAR_RET(a) ( a != NULL ) ? ( *a ) : ( 0 )
 
 /** Database defines */
