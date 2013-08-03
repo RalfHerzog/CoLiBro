@@ -11,6 +11,8 @@ char getch();
 
 #else
 
+#include <conio.h>
+
 #endif
 
 #endif // GETCH_INCLUDED
