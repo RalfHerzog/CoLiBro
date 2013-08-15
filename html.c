@@ -69,7 +69,7 @@ void html_parse( struct HTML* html, const char* content )
     }
     else
     {
-      html_free_tags( current );
+      // html_free_tags( current );
     }
   }while( 1 );
 
