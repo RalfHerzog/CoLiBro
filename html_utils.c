@@ -147,3 +147,26 @@ void html_replace_special_chars( const char* input, char** output )
   memset( ret+j, 0, 1 );
   *output = ret;
 }
+
+void html_sanitize_post_data( char** content )
+{
+  unsigned int i;
+
+  if ( content == NULL || *content == NULL )
+  {
+    return;
+  }
+
+  for ( i = 0 ; *(*content + i) != '\0' ; i++ )
+  {
+    if ( *(*content + i) == '&' )
+    {
+      *(*content + i) = ' ';
+    }
+
+    if ( *(*content + i) == '=' )
+    {
+      *(*content + i) = ' ';
+    }
+  }
+}

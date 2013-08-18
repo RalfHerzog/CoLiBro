@@ -1044,17 +1044,19 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
   {
     /** Content is binary */
     http_set_opt( http, HTTP_OPTION_CONTENT_BINARY, 1 );
-    if ( http_get_opt( http, HTTP_OPTION_DOWNLOAD_FILES ) )
-    {
-      http_get_link_info( http, &link, http->header->remoteFile );
-      if ( link.file != NULL )
-      {
-        http_save_data_to_file( http, link.file );
-        return;
-      }
-      http_link_info_free( &link );
-    }
   }
+
+  if ( http_get_opt( http, HTTP_OPTION_DOWNLOAD_FILES ) )
+  {
+    http_get_link_info( http, &link, http->header->remoteFile );
+    if ( link.file != NULL )
+    {
+      http_save_data_to_file( http, link.file );
+      return;
+    }
+    http_link_info_free( &link );
+  }
+
   if ( pContent == NULL )
   {
     /** Dummy read for clearing socket */

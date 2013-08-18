@@ -18,5 +18,6 @@ void html_list_create( struct HTML_TAG* start, struct HTML_TAG* end, const char*
 void html_list_free( struct HTML_LIST* list );
 void html_escape_string( char** sPostData );
 void html_replace_special_chars( const char* input, char** output );
+void html_sanitize_post_data( char** content );
 
 #endif // HTML_UTILS_H_INCLUDED
