@@ -15,7 +15,7 @@ struct HTTP_LINK_INFO{
   int size;
 };
 
-void http_get_link_info ( struct HTTP* http, struct HTTP_LINK_INFO* http_info, const char* sLink );
+void http_link_get_info ( struct HTTP* http, struct HTTP_LINK_INFO* http_info, const char* sLink );
 void http_link_info_free( struct HTTP_LINK_INFO* http_link_info );
 
 #endif // HTTP_LINK_INFO_H_INCLUDED

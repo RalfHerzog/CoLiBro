@@ -1048,7 +1048,7 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
 
   if ( http_get_opt( http, HTTP_OPTION_DOWNLOAD_FILES ) )
   {
-    http_get_link_info( http, &link, http->header->remoteFile );
+    http_link_get_info( http, &link, http->header->remoteFile );
     if ( link.file != NULL )
     {
       http_save_data_to_file( http, link.file );
@@ -1415,7 +1415,7 @@ void http_parse_link( struct HTTP* http )
   struct HTTP_LINK_INFO link_info;
   char* remoteFile;
 
-  http_get_link_info( http, &link_info, http->header->originalQuery );
+  http_link_get_info( http, &link_info, http->header->originalQuery );
 
   remoteFile = (char*)malloc( link_info.size );
   memset( remoteFile, 0, link_info.size );

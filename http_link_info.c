@@ -261,7 +261,7 @@ void http_get_link_parameter( const char* sLink, char** sParameter, int* length 
   html_replace_special_chars( sLink, sParameter );
   *length = strlen( sLink );
 }
-void http_get_link_info ( struct HTTP* http, struct HTTP_LINK_INFO* http_info, const char* sLink )
+void http_link_get_info ( struct HTTP* http, struct HTTP_LINK_INFO* http_info, const char* sLink )
 {
   char* sProtocol, *sHost, *sPort, *sSubdir, *sFile, *sParameter, *sSubdir_old, *sTmp;
   int size, currentSize, totalSize;
