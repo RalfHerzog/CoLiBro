@@ -131,7 +131,11 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
   {
     http_alloc( http, HTTP_RESET );
 
-    sqlite3_open( HTTP_SQLITE_DB, &http->sqlite_handle );
+    if ( !http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
+    {
+      sqlite3_open( HTTP_SQLITE_DB, &http->sqlite_handle );
+    }
+
     http_sqlite_db_create( http );
     http_sqlite_db_startup( http );
 
@@ -144,7 +148,10 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
   }
   if ( reset & HTTP_FREE )
   {
-    sqlite3_close( http->sqlite_handle );
+    if ( !http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
+    {
+      sqlite3_close( http->sqlite_handle );
+    }
 
     http_header_init( &http->header, HTTP_HEADER_FREE );
     free( http->server );
@@ -446,37 +453,40 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   http_sqlite_cookie_path( http->header->remoteFile, &sqlite_path );
 
   /** Cookies */
-  sqlite_query = sqlite3_mprintf( HTTP_SQLITE_COOKIE_SELECT_DOMAIN, sqlite_server, sqlite_path );
-  free( sqlite_server );
-  free( sqlite_path );
-
-  cookies = (char*)malloc( 4*1024 );
-  memset( cookies, 0, 4*1024 );
-  memcpy( cookies, "Cookie: ", 8 );
-
-  sqlite3_prepare( http->sqlite_handle, sqlite_query, strlen( sqlite_query ), &http->stmt, NULL );
-  while ( sqlite3_step( http->stmt ) != SQLITE_DONE )
+  if ( !http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
   {
-    if( strstr( http->server, (const char*)(sqlite3_column_text( http->stmt, 0 )+1) ) )
+    sqlite_query = sqlite3_mprintf( HTTP_SQLITE_COOKIE_SELECT_DOMAIN, sqlite_server, sqlite_path );
+    free( sqlite_server );
+    free( sqlite_path );
+
+    cookies = (char*)malloc( 4*1024 );
+    memset( cookies, 0, 4*1024 );
+    memcpy( cookies, "Cookie: ", 8 );
+
+    sqlite3_prepare( http->sqlite_handle, sqlite_query, strlen( sqlite_query ), &http->stmt, NULL );
+    while ( sqlite3_step( http->stmt ) != SQLITE_DONE )
     {
-      if ( strlen( cookies ) > 8 )
+      if( strstr( http->server, (const char*)(sqlite3_column_text( http->stmt, 0 )+1) ) )
       {
-        strcat( cookies, "; " );
+        if ( strlen( cookies ) > 8 )
+        {
+          strcat( cookies, "; " );
+        }
+        strcat( cookies, (const char*)sqlite3_column_text( http->stmt, 2 ) ); // Cookie name
+        strcat( cookies, "=" );
+        strcat( cookies, (const char*)sqlite3_column_text( http->stmt, 3 ) ); // Cookie value
       }
-      strcat( cookies, (const char*)sqlite3_column_text( http->stmt, 2 ) ); // Cookie name
-      strcat( cookies, "=" );
-      strcat( cookies, (const char*)sqlite3_column_text( http->stmt, 3 ) ); // Cookie value
     }
-  }
-	sqlite3_finalize( http->stmt );
-  sqlite3_free( sqlite_query );
+    sqlite3_finalize( http->stmt );
+    sqlite3_free( sqlite_query );
 
-  if ( strlen( cookies ) > 8 )
-  {
-    strcat( *query, cookies );
-    strcat( *query, HTTP_HEADER_NEWLINE );
+    if ( strlen( cookies ) > 8 )
+    {
+      strcat( *query, cookies );
+      strcat( *query, HTTP_HEADER_NEWLINE );
+    }
+    free( cookies );
   }
-  free( cookies );
 
   /** Connection */
   strcat( *query, "Connection: " );

@@ -6,6 +6,11 @@ void http_sqlite_db_create( struct HTTP* http )
   char* db_tables[] = { HTTP_SQLITE_DB_TABLE_COOKIES, HTTP_SQLITE_DB_TABLE_BM,
                         HTTP_SQLITE_DB_TABLE_DNS, HTTP_SQLITE_DB_TABLE_REDIRECT };
 
+  if ( http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
+  {
+    return;
+  }
+
   for ( i = 0 ; i < ( sizeof( db_tables ) / sizeof( char* ) ) ; i++ )
   {
     retval = sqlite3_exec( http->sqlite_handle, db_tables[i], 0, 0, 0 );
@@ -18,6 +23,11 @@ void http_sqlite_db_create( struct HTTP* http )
 void http_sqlite_db_startup( struct HTTP* http )
 {
   char* sqlite_query;
+
+  if ( http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
+  {
+    return;
+  }
 
   /** Remove cookies not valid anymore */
   sqlite_query = sqlite3_mprintf( HTTP_SQLITE_COOKIE_SELECT_ALL_EXPIRED );
@@ -39,6 +49,11 @@ int http_sqlite_num_rows( struct HTTP* http, const char* query )
 {
   int count = 0;
 
+  if ( http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
+  {
+    return 0;
+  }
+
   sqlite3_prepare( http->sqlite_handle, query, -1, &http->stmt, NULL );
   while ( sqlite3_step( http->stmt ) != SQLITE_DONE )
   {
@@ -57,6 +72,11 @@ void http_sqlite_cookie_update( struct HTTP* http, struct HTTP_COOKIE* cookie )
   if ( http_header_cookie_validate_expires( cookie->expires ) == HTTP_REG_NOERROR )
   {
     http_header_cookie_sqlite_expires( cookie->expires, &sqlite_datetime );
+  }
+
+  if ( http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
+  {
+    return;
   }
 
   // "Select" to check if update or insert
@@ -85,6 +105,16 @@ void http_sqlite_moved_add( struct HTTP* http )
 {
   char* sqlite_query;
   int retval;
+
+  if ( http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
+  {
+    if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
+    {
+      printf( "\nDISABLED: Add '%s' with link to '%s' to database\n", http->header->originalQuery, http->header->location );
+      fflush( stdout );
+    }
+    return;
+  }
 
   if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
   {
@@ -125,6 +155,16 @@ void http_sqlite_moved_check( struct HTTP* http )
 {
   char* sqlite_query;
   char found;
+
+  if ( http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
+  {
+    if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
+    {
+      printf( "\nDISABLED: Check if '%s' is moved permanently by the server\n", http->header->originalQuery );
+      fflush( stdout );
+    }
+    return;
+  }
 
   if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
   {
