@@ -104,13 +104,15 @@ void html_replace_special_chars( const char* input, char** output )
 {
   const char* special[] = {"&uuml;", "&Uuml;", "&ouml;", "&Ouml;", "&auml;", "&Auml;",
                             "&szlig;", "&amp;", "&euro;", "&lt;", "&gt;", "&quot;",
-                            "&copy;"};
-  const char* replace[] = {"ü", "Ü", "ö", "Ö", "ä", "Ä", "ß", "&", "€", "<", ">", "\"", "(c)" };
+                            "&copy;", "&nbsp;"};
+  const char* replace[] = {"ü", "Ü", "ö", "Ö", "ä", "Ä", "ß", "&", "€", "<", ">", "\"", "(c)", " " };
 
   int i, j, k;
-  unsigned int length;
+  unsigned int length, special_chars_length;
   unsigned char found;
   char* ret;
+
+  special_chars_length = 14;
 
   length = my_strlen( input );
   ret = (char*)malloc( length+1 );
@@ -123,7 +125,7 @@ void html_replace_special_chars( const char* input, char** output )
       found = 0;
 
       // Propably special sequence
-      for ( k = 0 ; k < ( sizeof( special ) / sizeof( char* ) ) ; k++ )
+      for ( k = 0 ; k < special_chars_length ; k++ )
       {
         if ( !strncmp( input+i, special[k], my_strlen( special[k] ) ) )
         {
