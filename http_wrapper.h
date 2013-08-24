@@ -72,7 +72,8 @@ enum HTTP_OPTION_STATUS{
   HTTP_OPTION_DECOMPRESS,
   HTTP_OPTION_SSL_ENABLED,
   HTTP_OPTION_POTOCOL_CHANGED,
-  HTTP_OPTION_SQLITE_DB_DISABLED
+  HTTP_OPTION_SQLITE_DB_DISABLED,
+  HTTP_OPTION_DOWNLOAD_FOLDER
 };
 
 enum HTTP_ERROR_STATUS {
@@ -91,7 +92,8 @@ enum HTTP_ERROR_STATUS {
   HTTP_ERROR_NO_STATUS_CODE_RECIEVED,
   HTTP_ERROR_NO_POST_DATA_PRESENT,
   HTTP_ERROR_NOT_IMPLEMENTED_YET,
-  HTTP_ERROR_UNEXPECTED_RESPONSE
+  HTTP_ERROR_UNEXPECTED_RESPONSE,
+  HTTP_ERROR_DOWNLOAD_FILE_TOO_BIG
 };
 
 struct HTTP_LIST{
@@ -110,8 +112,11 @@ struct HTTP{
   int socket;
   int lastResult;
   unsigned short port;
-  unsigned long options;
+  unsigned long long options;
+
   char* server;
+  char* download_folder;
+
   struct HTTP_ERROR error;
   struct hostent* hostent;
   struct sockaddr_in addr;

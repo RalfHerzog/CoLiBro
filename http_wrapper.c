@@ -9,7 +9,7 @@ void http_recv_chunked( struct HTTP* http, char** content, int* size );
 void http_recv_content( struct HTTP* http, char** pContent, int* size );
 void http_reconnect( struct HTTP* http, const char* sNewHost, const unsigned short port );
 void http_get_authorization_password( struct HTTP* http, char** str );
-void http_save_data_to_file( struct HTTP* http, const char* file );
+int http_save_data_to_file( struct HTTP* http, const char* file );
 
 void http_print_errorcode(  struct HTTP* http )
 {
@@ -78,6 +78,9 @@ void http_print_errorcode(  struct HTTP* http )
     case HTTP_ERROR_DOWNLOAD_SAVE_FILE:
       snprintf( text, size, "DOWNLOAD_SAVE_FILE: Cannot save the requested file to disk. Check write permissions" );
       break;
+    case HTTP_ERROR_DOWNLOAD_FILE_TOO_BIG:
+      snprintf( text, size, "DOWNLOAD_FILE_TOO_BIG: The response of the query is too big to fit in memory" );
+      break;
     default:
       snprintf( text, size, "ERROR: %i %s", http->header->status.responseId, http->header->status.responseText );
       break;
@@ -104,7 +107,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
 {
   unsigned long options;
   int lastResult;
-  char* server;
+  char* server, *download_folder;
   int socket;
   struct HTTP_HEADER* header;
 
@@ -155,6 +158,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
 
     http_header_init( &http->header, HTTP_HEADER_FREE );
     free( http->server );
+    free( http->download_folder );
     free( http->header );
     http_alloc( http, HTTP_RESET );
   }
@@ -163,6 +167,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     server = http->server;
     socket = http->socket;
     options = http->options;
+    download_folder = http->download_folder;
     lastResult = http->lastResult;
 
     connect_func = http->connect_func;
@@ -171,6 +176,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     close_func = http->close_func;
 
     http->server = NULL;
+    http->download_folder = NULL;
 
     if ( reset & HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA )
     {
@@ -187,6 +193,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     http->server = server;
     http->socket = socket;
     http->options = options;
+    http->download_folder = download_folder;
     http->lastResult = lastResult;
 
     http->connect_func = connect_func;
@@ -203,7 +210,7 @@ void http_free( struct HTTP* http )
 
 void http_raw_connect( struct HTTP* http )
 {
-  #warning "TODO gethostbyname_r:TODO getaddrinfo"
+  #warning "TODO gethostbyname_r => TODO getaddrinfo"
   http->hostent = gethostbyname( http->server );
   if ( http->hostent == NULL )
   {
@@ -295,43 +302,47 @@ void http_set_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option, ... )
   http->lastResult = 0;
 
   va_start( tags, option );
-  value = va_arg( tags, unsigned int* );
-  va_end( tags );
 
-  if ( value == (void*)0x00 || value == (void*)0x01  )
+  /** Options with special function follows here */
+  switch( option )
   {
-    if ( value ) http->options |= 1<<option;
-    else http->options &= ~(1<<option);
-  }
-  else
-  {
-    /** Options with special function follows here */
-    if ( http_get_opt( http, HTTP_OPTION_RECV_TIMEOUT ) )
-    {
+    case HTTP_OPTION_RECV_TIMEOUT:
+      value = va_arg( tags, unsigned int* );
+      if ( value ) http->options |= 1<<option;
+      else http->options &= ~(1<<option);
+
       timeout.tv_sec  = (time_t)value;
       timeout.tv_usec = 0;
-
       http->lastResult = setsockopt ( http->socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(struct timeval) );
-    }
-    else if ( http_get_opt( http, HTTP_OPTION_SEND_TIMEOUT ) )
-    {
+      break;
+    case HTTP_OPTION_SEND_TIMEOUT:
+      value = va_arg( tags, unsigned int* );
+      if ( value ) http->options |= 1<<option;
+      else http->options &= ~(1<<option);
+
       timeout.tv_sec  = (time_t)value;
       timeout.tv_usec = 0;
       http->lastResult = setsockopt ( http->socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(timeout) );
-    }
-    else if ( http_get_opt( http, HTTP_OPTION_CONNECT_TIMEOUT ) )
-    {
+      break;
+    case HTTP_OPTION_CONNECT_TIMEOUT:
       http->error.errorId = HTTP_ERROR_NOT_IMPLEMENTED_YET;
       http->error.line = __LINE__;
       http->error.file = __FILE__;
-      return;
-    }
-    else
-    {
-      printf("No default behavior for this option: %i\n", option );
-      fflush( stdout );
-    }
+      break;
+    case HTTP_OPTION_DOWNLOAD_FOLDER:
+      value = va_arg( tags, char* );
+      http->download_folder = new_string( (char*)value );
+
+      http->options |= 1<<option;
+      break;
+    default:
+      value = va_arg( tags, void* );
+      if ( value ) http->options |= 1<<option;
+      else http->options &= ~(1<<option);
+      break;
   }
+  va_end( tags );
+
   if ( http->lastResult < 0 )
   {
     printf("Failed to set option: %i\n", option );
@@ -1061,7 +1072,14 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
     http_link_get_info( http, &link, http->header->remoteFile );
     if ( link.file != NULL )
     {
-      http_save_data_to_file( http, link.file );
+      if ( size != NULL )
+      {
+        *size = http_save_data_to_file( http, link.file );
+      }
+      else
+      {
+        http_save_data_to_file( http, link.file );
+      }
       return;
     }
     http_link_info_free( &link );
@@ -1108,6 +1126,24 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
   {
     if ( http->header->contentLength != 0 && http->header->transferEncoding == NULL )
     {
+      if ( http->header->contentLength > 100 * ( 1024 * 1024 ) )
+      {
+        http->error.errorId = HTTP_ERROR_DOWNLOAD_FILE_TOO_BIG;
+        http->error.line = __LINE__;
+        http->error.file = __FILE__;
+
+        if ( pContent != NULL )
+        {
+          *pContent = NULL;
+        }
+        if ( size != NULL )
+        {
+          *size = 0;
+        }
+
+        return;
+      }
+
       content = (char*)malloc( http->header->contentLength+1 );
       http_raw_recv( http, &content, http->header->contentLength, &size_tmp );
       memset( content+http->header->contentLength, 0, 1 );
@@ -1566,26 +1602,38 @@ void http_get_page( struct HTTP* http, const char* link, char** content, int* si
   }
   return;
 }
-void http_save_data_to_file( struct HTTP* http, const char* file )
+
+int http_save_data_to_file( struct HTTP* http, const char* file )
 {
   const int mem_size = 1024;
 
-  char* content;
+  char* content, *folder_file;
   int size_left_to_recv, size_tmp = 0;
   FILE* fFile;
 
   if ( http->error.errorId != 0 )
   {
-    return;
+    return 0;
   }
 
-  fFile = fopen( file, "wb" );
+  if ( http_get_opt( http, HTTP_OPTION_DOWNLOAD_FOLDER ) )
+  {
+    folder_file = (char*)malloc( 255 );
+    snprintf( folder_file, 255, "%s%s", http->download_folder, file );
+
+    fFile = fopen( folder_file, "wb" );
+  }
+  else
+  {
+    fFile = fopen( file, "wb" );
+  }
+
   if ( fFile == NULL )
   {
     http->error.errorId = HTTP_ERROR_DOWNLOAD_SAVE_FILE;
     http->error.line = __LINE__;
     http->error.file = __FILE__;
-    return;
+    return 0;
   }
 
   content = (char*)malloc( mem_size );
@@ -1608,6 +1656,8 @@ void http_save_data_to_file( struct HTTP* http, const char* file )
 
   fclose( fFile );
   free( content );
+
+  return http->header->contentLength;
 }
 void http_close( struct HTTP* http )
 {
@@ -1634,8 +1684,9 @@ void http_write_memory_dump( struct HTTP* http, FILE* fFile )
   fprintf( fFile, "lastResult: %i\n", http->lastResult );
   fprintf( fFile, "lastError: %i\n", http->error.errorId );
   fprintf( fFile, "port: %i\n", http->port );
-  fprintf( fFile, "options: %lu\n", http->options );
+  fprintf( fFile, "options: %llu\n", http->options );
   fprintf( fFile, "server: %s\n", http->server );
+  fprintf( fFile, "download_folder: %s\n", http->download_folder );
   fprintf( fFile, "hostent address: %p\n", http->hostent );
   fprintf( fFile, "addr: %p\n", &http->addr );
 
