@@ -1043,7 +1043,7 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
   unsigned char* content_tmp;
   int size_tmp, size_out;
   int size_left_to_recv;
-  const int mem_size = 1024;
+  const int mem_size = 30 * 1024 * 1024;
   struct HTTP_LINK_INFO link;
 
   if ( pContent != NULL )
@@ -1605,7 +1605,7 @@ void http_get_page( struct HTTP* http, const char* link, char** content, int* si
 
 int http_save_data_to_file( struct HTTP* http, const char* file )
 {
-  const int mem_size = 1024;
+  const int mem_size = 30 * 1024 * 1024;
 
   char* content, *folder_file;
   int size_left_to_recv, size_tmp = 0;
