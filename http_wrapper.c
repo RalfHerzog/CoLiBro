@@ -1684,7 +1684,6 @@ void http_write_memory_dump( struct HTTP* http, FILE* fFile )
   fprintf( fFile, "lastResult: %i\n", http->lastResult );
   fprintf( fFile, "lastError: %i\n", http->error.errorId );
   fprintf( fFile, "port: %i\n", http->port );
-  fprintf( fFile, "options: %llu\n", http->options );
   fprintf( fFile, "server: %s\n", http->server );
   fprintf( fFile, "download_folder: %s\n", http->download_folder );
   fprintf( fFile, "hostent address: %p\n", http->hostent );
