@@ -20,11 +20,19 @@
 #define HTTP_HEADER_STATUS_ID_SIZE      3
 
 #ifndef HTTP_HEADER_USER_AGENT_MOBILE
-  #define HTTP_HEADER_USER_AGENT_MOBILE  "CoLiBro/1.0 (X11; U; Other; de-de ) Version/1.0 Mobile/1.0 CommandLineBrowser/1.0.1"
+  #define HTTP_HEADER_USER_AGENT_MOBILE  "CoLiBro/1.0 (Other; U; Other; de-de ) Version/1.0 Mobile/1.0 CommandLineBrowser/1.0.1"
 #endif
 
 #ifndef HTTP_HEADER_USER_AGENT_DESKTOP
-  #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (X11; Linux x86_64; U; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
+  #if defined _WIN32
+    #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Windows; U; Windows NT 5.1 x86; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
+  #elseif defined _WIN64
+    #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Windows; U; Windows NT 5.1 x86; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
+  #elseif defined __linux
+    #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (X11; Linux x86_64; U; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
+  #else
+    #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Other; Other; U; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
+  #endif
 #endif
 
 #ifndef HTTP_HEADER_USER_AGENT_DESKTOP_MOZILLA
