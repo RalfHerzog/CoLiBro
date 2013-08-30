@@ -26,9 +26,9 @@
 #ifndef HTTP_HEADER_USER_AGENT_DESKTOP
   #if defined _WIN32
     #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Windows; U; Windows NT 5.1 x86; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
-  #elseif defined _WIN64
+  #elif defined _WIN64
     #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Windows; U; Windows NT 5.1 x86; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
-  #elseif defined __linux
+  #elif defined __linux
     #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (X11; Linux x86_64; U; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
   #else
     #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Other; Other; U; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"

@@ -110,7 +110,7 @@ struct HTTP_ERROR{
 
 struct HTTP{
   int socket;
-  int lastResult;
+  int last_result;
   unsigned short port;
   unsigned long long options;
 

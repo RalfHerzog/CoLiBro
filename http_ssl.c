@@ -15,7 +15,7 @@ void http_ssl_connect( struct HTTP* http )
   memset( &http->ssl.ssl_sess, 0, sizeof( ssl_session ) );
   memset( &http->ssl.ssl, 0, sizeof( ssl_context ) );
 
-  http->lastResult = net_connect( &http->socket, http->server, http->port );
+  http->last_result = net_connect( &http->socket, http->server, http->port );
 
   lastResult = ssl_init( &http->ssl.ssl );
   if ( lastResult != 0 )

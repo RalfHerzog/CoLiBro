@@ -168,7 +168,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     socket = http->socket;
     options = http->options;
     download_folder = http->download_folder;
-    lastResult = http->lastResult;
+    lastResult = http->last_result;
 
     connect_func = http->connect_func;
     recv_func = http->recv_func;
@@ -194,7 +194,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     http->socket = socket;
     http->options = options;
     http->download_folder = download_folder;
-    http->lastResult = lastResult;
+    http->last_result = lastResult;
 
     http->connect_func = connect_func;
     http->recv_func = recv_func;
@@ -226,7 +226,7 @@ void http_raw_connect( struct HTTP* http )
   memcpy( &http->addr.sin_addr.s_addr, http->hostent->h_addr, http->hostent->h_length );
   http->addr.sin_port = htons( http->port );
 
-  http->lastResult = connect( http->socket , (struct sockaddr*)&http->addr, sizeof(http->addr) );
+  http->last_result = connect( http->socket , (struct sockaddr*)&http->addr, sizeof(http->addr) );
 
 }
 void http_connect( struct HTTP* http, const char* host, const unsigned short port )
@@ -266,7 +266,7 @@ void http_connect( struct HTTP* http, const char* host, const unsigned short por
 
   http->connect_func( http );
 
-  if ( http->lastResult == -1 )
+  if ( http->last_result == -1 )
   {
     http->error.errorId = HTTP_ERROR_CONNECT_FAILED;
     http->error.line = __LINE__;
@@ -274,7 +274,7 @@ void http_connect( struct HTTP* http, const char* host, const unsigned short por
   }
   if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
   {
-    printf("%s\n", http->lastResult != -1 ? "success" : "failed" );
+    printf("%s\n", http->last_result != -1 ? "success" : "failed" );
     fflush( stdout );
   }
   return;
@@ -285,7 +285,7 @@ HTTP_BOOL http_get_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option )
   {
     return 0;
   }
-  http->lastResult = 0;
+  http->last_result = 0;
 
   return http->options & (1<<option) ? HTTP_BOOL_TRUE : HTTP_BOOL_FALSE;
 }
@@ -299,7 +299,7 @@ void http_set_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option, ... )
   {
     return;
   }
-  http->lastResult = 0;
+  http->last_result = 0;
 
   va_start( tags, option );
 
@@ -313,7 +313,7 @@ void http_set_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option, ... )
 
       timeout.tv_sec  = (time_t)value;
       timeout.tv_usec = 0;
-      http->lastResult = setsockopt ( http->socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(struct timeval) );
+      http->last_result = setsockopt ( http->socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(struct timeval) );
       break;
     case HTTP_OPTION_SEND_TIMEOUT:
       value = va_arg( tags, unsigned int* );
@@ -322,7 +322,7 @@ void http_set_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option, ... )
 
       timeout.tv_sec  = (time_t)value;
       timeout.tv_usec = 0;
-      http->lastResult = setsockopt ( http->socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(timeout) );
+      http->last_result = setsockopt ( http->socket, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(timeout) );
       break;
     case HTTP_OPTION_CONNECT_TIMEOUT:
       http->error.errorId = HTTP_ERROR_NOT_IMPLEMENTED_YET;
@@ -343,7 +343,7 @@ void http_set_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option, ... )
   }
   va_end( tags );
 
-  if ( http->lastResult < 0 )
+  if ( http->last_result < 0 )
   {
     printf("Failed to set option: %i\n", option );
     fflush( stdout );
@@ -1654,6 +1654,7 @@ int http_save_data_to_file( struct HTTP* http, const char* file )
     fwrite( content, size_tmp, 1, fFile );
   }while( size_tmp > 0 && size_left_to_recv > 0 );
 
+  fflush( fFile );
   fclose( fFile );
   free( content );
 
@@ -1681,7 +1682,7 @@ void http_write_memory_dump( struct HTTP* http, FILE* fFile )
   fprintf( fFile, "-------HTTP-Section-------\n" );
   fprintf( fFile, "http adress: %p\n", http );
   fprintf( fFile, "socket: %i\n", http->socket );
-  fprintf( fFile, "lastResult: %i\n", http->lastResult );
+  fprintf( fFile, "lastResult: %i\n", http->last_result );
   fprintf( fFile, "lastError: %i\n", http->error.errorId );
   fprintf( fFile, "port: %i\n", http->port );
   fprintf( fFile, "server: %s\n", http->server );
