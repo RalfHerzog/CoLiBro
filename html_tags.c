@@ -164,7 +164,8 @@ void html_tag_init( struct HTML* html, const char* content, struct HTML_TAG** ta
 
   html_tag_init_parameter( tag_begin, tag_end, &(*tag)->parameter, &size );
 
-  if ( !strcmpi( (*tag)->name, "input" ) )
+  // if ( !strcmpi( (*tag)->name, "input" ) )
+  if ( (*tag)->parameter != NULL && html_get_opt( html, HTML_OPTION_EXTENDED_PARAMS ) )
   {
     html_tag_get_parameter_field( (*tag)->parameter, "name", &(*tag)->param_name, NULL );
     html_tag_get_parameter_field( (*tag)->parameter, "value", &(*tag)->param_value, NULL );

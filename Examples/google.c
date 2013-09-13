@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "src/colibro.h"
+#include "colibro.h"
 
 int main()
 {
@@ -13,7 +13,7 @@ int main()
   char* content;
   int size;
 
-  http_init( &http, HTTP_INIT );
+  http_init( &http );
 
   http_set_opt( &http, HTTP_OPTION_VERBOSE, HTTP_BOOL_TRUE );
   http_set_opt( &http, HTTP_OPTION_DOWNLOAD_FILES, 1 );
