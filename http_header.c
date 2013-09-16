@@ -346,7 +346,7 @@ void http_header_follow( struct HTTP* http )
   {
     return;
   }
-  
+
   http_sqlite_moved_check( http );
   http_alloc( http, HTTP_FREE_WITHOUT_PERSISTENT_DATA | HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA );
 

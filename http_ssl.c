@@ -36,7 +36,7 @@ void http_ssl_connect( struct HTTP* http )
 }
 int http_ssl_recv( struct HTTP* http, void *__buf, size_t __n )
 {
-  return ssl_read( &http->ssl.ssl, __buf, __n );
+  return ssl_read( &(http->ssl.ssl), __buf, __n );
 }
 int http_ssl_send( struct HTTP* http, const char *__buf, size_t __n )
 {

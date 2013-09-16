@@ -10,33 +10,6 @@ char ctolower( char c )
 }
 int strcmpi( const char* str1, const char* str2 )
 {
-  char* str1_tmp, *str2_tmp;
-  unsigned int i;
-
-  if ( str1 == NULL || str2 == NULL )
-  {
-    return 1;
-  }
-
-  str1_tmp = new_string( str1 );
-  str2_tmp = new_string( str2 );
-
-  for ( i = 0 ; i < strlen( str1_tmp ) ; i++ )
-  {
-    str1_tmp[i] = ctolower( str1_tmp[i] );
-  }
-  for ( i = 0 ; i < strlen( str2_tmp ) ; i++ )
-  {
-    str2_tmp[i] = ctolower( str2_tmp[i] );
-  }
-  i = strcmp( str1_tmp, str2_tmp );
-  free( str1_tmp );
-  free( str2_tmp );
-  return i;
-}
-int strncmpi( const char* str1, const char* str2, int size )
-{
-  char* str1_tmp, *str2_tmp;
   unsigned int i;
 
   if ( str1 == NULL )
@@ -48,21 +21,59 @@ int strncmpi( const char* str1, const char* str2, int size )
     return 1;
   }
 
-  str1_tmp = new_string( str1 );
-  str2_tmp = new_string( str2 );
+  for ( i = 0 ; ; i++ )
+  {
+    if ( str1[i] == '\0' && str2[i] == '\0' )
+    {
+      return 0;
+    }
 
-  for ( i = 0 ; i < my_strlen( str1_tmp ) ; i++ )
-  {
-    str1_tmp[i] = ctolower( str1_tmp[i] );
+    if ( str1[i] == '\0' )
+    {
+      return -1;
+    }
+    if ( str2[i] == '\0' )
+    {
+      return 1;
+    }
+
+    if ( str1[i] != str2[i] )
+    {
+      return ( str1[i] > str2[i] ) ? -1 : 1;
+    }
   }
-  for ( i = 0 ; i < my_strlen( str2_tmp ) ; i++ )
+  return 0;
+}
+int strncmpi( const char* str1, const char* str2, int size )
+{
+  unsigned int i;
+
+  if ( str1 == NULL )
   {
-    str2_tmp[i] = ctolower( str2_tmp[i] );
+    return -1;
   }
-  i = strncmp( str1_tmp, str2_tmp, size );
-  free( str1_tmp );
-  free( str2_tmp );
-  return i;
+  if ( str2 == NULL )
+  {
+    return 1;
+  }
+
+  for ( i = 0 ; i < size ; i++ )
+  {
+    if ( str1[i] == '\0' )
+    {
+      return -1;
+    }
+    if ( str2[i] == '\0' )
+    {
+      return 1;
+    }
+
+    if ( str1[i] != str2[i] && ctolower( str1[i] ) != ctolower( str2[i] ) )
+    {
+      return ( str1[i] > str2[i] ) ? -1 : 1;
+    }
+  }
+  return 0;
 }
 char* stristr( const char* str1, const char* str2 )
 {

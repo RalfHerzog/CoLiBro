@@ -364,8 +364,8 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
 
   *size = 0;
 
-  *query = (char*)malloc( 64*1024 );
-  memset( *query, 0, 64*1024 );
+  *query = (char*)malloc( 5*1024*1024 );
+  memset( *query, 0, 5*1024*1024 );
 
   /** Method */
   if ( http->header->method == NULL )
@@ -842,6 +842,16 @@ void http_raw_recv( struct HTTP* http, char** sData, int iBytesToRead, int* iByt
   do
   {
     iBytesRecvCurrent = http->recv_func( http, *sData + iBytesRecvTotal, iBytesToRead - iBytesRecvTotal );
+    if ( iBytesRecvCurrent < 0 )
+    {
+      // Error on transmission
+      http->last_result = iBytesRecvCurrent;
+
+      http->error.errorId = HTTP_ERROR_RAW_RECV_ERROR;
+      http->error.line = __LINE__;
+      http->error.file = __FILE__;
+      break;
+    }
     iBytesRecvTotal += iBytesRecvCurrent;
   }while( iBytesRecvCurrent > 0 && iBytesRecvTotal < iBytesToRead );
   if ( iBytesRead != NULL )
