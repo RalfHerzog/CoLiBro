@@ -554,11 +554,15 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
       strcat( *query, "Content-Type: application/x-www-form-urlencoded" );
       strcat( *query, HTTP_HEADER_NEWLINE );
 
-      post_data_encoded = http_post_encode( http->header->postData );
-      free( http->header->postData );
+      if ( http->header->postData_size == 0 )
+      {
+        http->header->postData_size = my_strlen( http->header->postData );
+      }
+      //http_post_encode( (char**)&post_data_encoded, (unsigned char*)http->header->postData, http->header->postData_size );
+      //free( http->header->postData );
 
-      http->header->postData = post_data_encoded;
-      post_data_encoded = NULL;
+      //http->header->postData = post_data_encoded;
+      //post_data_encoded = NULL;
     }
 
     strcat( *query, "Content-Length: " );
@@ -627,6 +631,7 @@ void http_query( struct HTTP* http )
   }
 
   http_prepare_query( http, &query, &size );
+
   http_log_write( http, query, 1 );
   http_header_init( &http->header, HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA );
 
@@ -1450,7 +1455,7 @@ void http_get_authorization_password( struct HTTP* http, char** str )
     free( username );
     free( password );
 
-    base64_decoded_string = base64_string_encode( tmpStr );
+    base64_decoded_string = base64_string_encode( tmpStr, 0 );
     free( tmpStr );
 
     *str = (char*)malloc( 6 + strlen( base64_decoded_string ) + 1 );

@@ -105,6 +105,7 @@ void http_header_init( struct HTTP_HEADER** header, HTTP_HEX reset )
   char* originalQuery;
   struct HTTP_COOKIE* cookies;
   struct HTTP_HEADER_FIELD clientFields;
+  unsigned int postData_size;
 
   if ( reset & HTTP_HEADER_RESET )
   {
@@ -165,6 +166,7 @@ void http_header_init( struct HTTP_HEADER** header, HTTP_HEX reset )
     connectionState = (*header)->connectionState;
     cookies = (*header)->cookies;
     postData = (*header)->postData;
+    postData_size = (*header)->postData_size;
     originalQuery = (*header)->originalQuery;
 
     (*header)->remoteFile = NULL;
@@ -180,6 +182,7 @@ void http_header_init( struct HTTP_HEADER** header, HTTP_HEX reset )
     (*header)->connectionState = connectionState;
     (*header)->cookies = cookies;
     (*header)->postData = postData;
+    (*header)->postData_size = postData_size;
     (*header)->originalQuery = originalQuery;
   }
   return;

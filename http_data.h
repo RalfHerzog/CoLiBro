@@ -4,6 +4,6 @@
 #include "http_wrapper.h"
 #include "http_utils.h"
 
-char* http_post_encode( const char* postData );
+int http_post_encode(char **dest, const unsigned char *src, int length);
 
 #endif // HTTP_DATA_H_INCLUDED

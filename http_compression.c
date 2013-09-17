@@ -84,16 +84,32 @@ unsigned char inflateData( unsigned char** ucomp, int* usize,
   return ret;
 }
 
-char* base64_string_encode( char* input )
+char* base64_string_encode( char* input, unsigned int length )
 {
   int n;
   unsigned char* content;
   size_t size;
 
-  n = my_strlen( input );
-  size = (int)( ((n+2-((n+2)%3))/3*4) +1 );
-  content = (unsigned char*)malloc( size );
+  if ( input == NULL )
+  {
+    return NULL;
+  }
+
+  n = length;
+  if ( length == 0 )
+  {
+    n = my_strlen( input );
+  }
+
+  // Determinate output length first
+  size = 0;
+  base64_encode( NULL, &size, (unsigned char*)input, n );
+
+  // Encode the data
+  content = (unsigned char*)malloc( size + 1 );
   base64_encode( content, &size, (unsigned char*)input, n );
+  memset( content + size, 0, 1 );
 
   return (char*)content;
 }
+

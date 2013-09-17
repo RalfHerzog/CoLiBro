@@ -20,7 +20,6 @@ char* new_string_num( const char* text, const unsigned int size );
 unsigned int my_strlen( const char* str );
 char* my_itoa( const unsigned long count );
 void* my_min( void* str1, void* str2 );
-char* base64_string_encode( char* input );
 
 unsigned char isCharNumeric( char c );
 unsigned char isCharAlpha( char c );

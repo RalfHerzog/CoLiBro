@@ -75,6 +75,7 @@ struct HTTP_HEADER {
   char* userAgent;
   char* wwwAutheticate;
   char* postData;
+  unsigned int postData_size;
 
   char* originalQuery;
 
