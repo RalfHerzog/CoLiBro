@@ -37,7 +37,7 @@ int strcmpi( const char* str1, const char* str2 )
       return 1;
     }
 
-    if ( str1[i] != str2[i] )
+    if ( str1[i] != str2[i] && ctolower( str1[i] ) != ctolower( str2[i] ) )
     {
       return ( str1[i] > str2[i] ) ? -1 : 1;
     }
@@ -102,11 +102,15 @@ char* stristr( const char* str1, const char* str2 )
   }
 
   ptr = strstr( str_1, str_2 );
+  free( str_2 );
   if ( !ptr )
   {
+    free( str_1 );
     return NULL;
   }
   ptr = (char*)str1 + ( ptr - str_1 );
+  free( str_1 );
+
   return ptr;
 }
 int xtoi( const char* hex )
