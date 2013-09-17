@@ -355,7 +355,6 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   struct HTTP_HEADER_FIELD_ITERATOR header_field_it = {0};
   struct HTTP_HEADER_FIELD* header_field = NULL;
   char* sqlite_query, *sqlite_server, *sqlite_path, *cookies;
-  char* post_data_encoded;
 
   if ( http->error.errorId != 0 )
   {
