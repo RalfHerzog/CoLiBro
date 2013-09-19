@@ -4,12 +4,6 @@
 #include "http_wrapper.h"
 #include "http_utils.h"
 
-//enum HTTP_POST_METHOD {
-//  HTTP_POST_METHOD_PLAIN = 0,
-//  HTTP_POST_METHOD_URLENCODED,
-//  HTTP_POST_METHOD_MULTIPART_DATA
-//};
-
 struct HTTP_POST_FORM_URLENCODED_DATA_ITEM {
   unsigned char* key;
   unsigned int   key_length;
