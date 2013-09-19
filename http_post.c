@@ -80,7 +80,7 @@ unsigned int http_post_form_urlencoded_get_data( char** content, struct HTTP* ht
   {
     strcat( *content, (char*)http_post_form_urlencoded_data_it->key );
     strcat( *content, "=" );
-    strcat( *content, (char*)http_post_form_urlencoded_data_it->value );
+    strncat( *content, (char*)http_post_form_urlencoded_data_it->value, http_post_form_urlencoded_data_it->value_length );
     strcat( *content, "&" );
     http_post_form_urlencoded_data_it = http_post_form_urlencoded_data_it->next;
   }
