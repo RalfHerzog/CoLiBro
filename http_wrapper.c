@@ -81,6 +81,8 @@ void http_print_errorcode(  struct HTTP* http )
     case HTTP_ERROR_DOWNLOAD_FILE_TOO_BIG:
       snprintf( text, size, "DOWNLOAD_FILE_TOO_BIG: The response of the query is too big to fit in memory" );
       break;
+    case HTTP_ERROR_POST_METHOD_UNKNOWN:
+      snprintf( text, size, "HTTP_ERROR_POST_METHOD_UNKNOWN: Unknown post method detected" );
     default:
       snprintf( text, size, "ERROR: %i %s", http->header->status.responseId, http->header->status.responseText );
       break;
@@ -549,30 +551,43 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
       return;
     }
 
-    /** Add more magic number types here */
-    if ( !strncmpi( http->post_data, "<?xml", 5 ) )
+    switch( http->post_method )
     {
-      strcat( *query, "Content-Type: text/xml;charset=utf-8" );
-      strcat( *query, HTTP_HEADER_NEWLINE );
-    }
-    else
-    {
-      strcat( *query, "Content-Type: application/x-www-form-urlencoded" );
-      strcat( *query, HTTP_HEADER_NEWLINE );
-
-      if ( http->post_data_size == 0 )
-      {
+      case HTTP_POST_METHOD_PLAIN:
         http->post_data_size = my_strlen( http->post_data );
-      }
-      //http_post_encode( (char**)&post_data_encoded, (unsigned char*)http->header->post_data, http->header->post_data_size );
-      //free( http->header->post_data );
 
-      //http->header->post_data = post_data_encoded;
-      //post_data_encoded = NULL;
+        if ( !strncmpi( http->post_data, "<?xml", 5 ) )
+        {
+          strcat( *query, "Content-Type: text/xml;charset=utf-8" );
+        }
+        /** Add more magic number types here */
+        break;
+      case HTTP_POST_METHOD_URLENCODED:
+        strcat( *query, "Content-Type: application/x-www-form-urlencoded" );
+
+        http->post_data_size = http_post_form_urlencoded_get_data( &http->post_data, http );
+
+        if ( http->post_data_size == 0 )
+        {
+          http->post_data_size = my_strlen( http->post_data );
+        }
+
+        break;
+      case HTTP_POST_METHOD_MULTIPART_DATA:
+        strcat( *query, "Content-Type: multipart/form-data" );
+
+
+        break;
+      default:
+        http->error.errorId = HTTP_ERROR_POST_METHOD_UNKNOWN;
+        http->error.line = __LINE__;
+        http->error.file = __FILE__;
+        return;
     }
+    strcat( *query, HTTP_HEADER_NEWLINE );
 
     strcat( *query, "Content-Length: " );
-    strcat( *query, my_itoa( my_strlen( http->post_data ) ) );
+    strcat( *query, my_itoa( http->post_data_size ) );
     strcat( *query, HTTP_HEADER_NEWLINE );
   }
   /// End of header
@@ -581,9 +596,9 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   /** Is there post_data to send? */
   if ( !strcmpi( http->header->method, "POST" ) )
   {
-    strcat( *query, http->post_data );
-    free( http->post_data );
-    http->post_data = NULL;
+    strncat( *query, http->post_data, http->post_data_size );
+//    free( http->post_data );
+//    http->post_data = NULL;
   }
   free( http->header->method );
   http->header->method = NULL;
