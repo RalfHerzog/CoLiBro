@@ -4,9 +4,17 @@
 #include "http_wrapper.h"
 #include "http_utils.h"
 
+enum HTTP_POST_METHOD {
+  HTTP_POST_METHOD_PLAIN = 0,
+  HTTP_POST_METHOD_URLENCODED,
+  HTTP_POST_METHOD_MULTIPART_DATA
+};
+
 struct HTTP_POST_FORM_URLENCODED_DATA_ITEM {
   unsigned char* key;
+  unsigned int   key_length;
   unsigned char* value;
+  unsigned int   value_length;
 
   struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* next;
 };
@@ -27,6 +35,7 @@ struct HTTP_POST_FORM_MULTIPART_DATA {
 };
 
 unsigned char http_post_form_urlencoded_add( struct HTTP* http, const char* key, const unsigned char* value, unsigned int value_length );
+unsigned int http_post_form_urlencoded_get_data( char** content, struct HTTP* http );
 int http_post_encode(char **dest, const unsigned char *src, int length);
 
 #endif // HTTP_POST_H_INCLUDED

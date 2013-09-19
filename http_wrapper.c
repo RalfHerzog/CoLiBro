@@ -107,9 +107,9 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
 {
   unsigned long options;
   int lastResult;
-  char* server, *download_folder, *postData;
+  char* server, *download_folder, *post_data;
   int socket;
-  unsigned int postData_size;
+  unsigned int post_data_size;
   struct HTTP_HEADER* header;
 
   void (*connect_func)(struct HTTP*);
@@ -160,7 +160,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     http_header_init( &http->header, HTTP_HEADER_FREE );
     free( http->server );
     free( http->download_folder );
-    free( http->postData );
+    free( http->post_data );
     free( http->header );
     http_alloc( http, HTTP_RESET );
   }
@@ -171,8 +171,8 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     options = http->options;
     download_folder = http->download_folder;
     lastResult = http->last_result;
-    postData = http->postData;
-    postData_size = http->postData_size;
+    post_data = http->post_data;
+    post_data_size = http->post_data_size;
 
     connect_func = http->connect_func;
     recv_func = http->recv_func;
@@ -181,7 +181,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
 
     http->server = NULL;
     http->download_folder = NULL;
-    http->postData = NULL;
+    http->post_data = NULL;
 
     if ( reset & HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA )
     {
@@ -200,8 +200,8 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     http->options = options;
     http->download_folder = download_folder;
     http->last_result = lastResult;
-    http->postData = postData;
-    http->postData_size = postData_size;
+    http->post_data = post_data;
+    http->post_data_size = post_data_size;
 
     http->connect_func = connect_func;
     http->recv_func = recv_func;
@@ -376,7 +376,7 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   /** Method */
   if ( http->header->method == NULL )
   {
-    if ( http->postData != NULL )
+    if ( http->post_data != NULL )
     {
       http->header->method = new_string("POST");
     }
@@ -538,10 +538,10 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   }
   http_header_field_iterator_free( &header_field_it );
 
-  /** Append postdata-field */
+  /** Append post_data-field */
   if ( !strcmpi( http->header->method, "POST" ) )
   {
-    if ( http->postData == NULL )
+    if ( http->post_data == NULL )
     {
       http->error.errorId = HTTP_ERROR_NO_POST_DATA_PRESENT;
       http->error.line = __LINE__;
@@ -550,7 +550,7 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
     }
 
     /** Add more magic number types here */
-    if ( !strncmpi( http->postData, "<?xml", 5 ) )
+    if ( !strncmpi( http->post_data, "<?xml", 5 ) )
     {
       strcat( *query, "Content-Type: text/xml;charset=utf-8" );
       strcat( *query, HTTP_HEADER_NEWLINE );
@@ -560,30 +560,30 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
       strcat( *query, "Content-Type: application/x-www-form-urlencoded" );
       strcat( *query, HTTP_HEADER_NEWLINE );
 
-      if ( http->postData_size == 0 )
+      if ( http->post_data_size == 0 )
       {
-        http->postData_size = my_strlen( http->postData );
+        http->post_data_size = my_strlen( http->post_data );
       }
-      //http_post_encode( (char**)&post_data_encoded, (unsigned char*)http->header->postData, http->header->postData_size );
-      //free( http->header->postData );
+      //http_post_encode( (char**)&post_data_encoded, (unsigned char*)http->header->post_data, http->header->post_data_size );
+      //free( http->header->post_data );
 
-      //http->header->postData = post_data_encoded;
+      //http->header->post_data = post_data_encoded;
       //post_data_encoded = NULL;
     }
 
     strcat( *query, "Content-Length: " );
-    strcat( *query, my_itoa( my_strlen( http->postData ) ) );
+    strcat( *query, my_itoa( my_strlen( http->post_data ) ) );
     strcat( *query, HTTP_HEADER_NEWLINE );
   }
   /// End of header
   strcat( *query, HTTP_HEADER_NEWLINE );
 
-  /** Is there postdata to send? */
+  /** Is there post_data to send? */
   if ( !strcmpi( http->header->method, "POST" ) )
   {
-    strcat( *query, http->postData );
-    free( http->postData );
-    http->postData = NULL;
+    strcat( *query, http->post_data );
+    free( http->post_data );
+    http->post_data = NULL;
   }
   free( http->header->method );
   http->header->method = NULL;
@@ -1329,8 +1329,8 @@ void http_handle_response( struct HTTP* http )
             http_sqlite_moved_add( http );
           case 2: /** 302 Found */
           case 3: /** 303 See Other */
-            free( http->postData );
-            http->postData = NULL;
+            free( http->post_data );
+            http->post_data = NULL;
           case 7: /** 307 Temporary Redirect ( Post -> Post ) */
             http_recv_content( http, NULL, NULL );
 
@@ -1729,7 +1729,7 @@ void http_write_memory_dump( struct HTTP* http, FILE* fFile )
     fprintf( fFile, "transferEncoding: %s\n", http->header->transferEncoding );
     fprintf( fFile, "userAgent: %s\n", http->header->userAgent );
     fprintf( fFile, "wwwAutheticate: %s\n", http->header->wwwAutheticate );
-    fprintf( fFile, "postData: %s\n", http->postData );
+    fprintf( fFile, "post_data: %s\n", http->post_data );
     fprintf( fFile, "cookies: %p\n", http->header->cookies );
 
     /*http_header_cookie_iterator_init( &cookie_it, http );

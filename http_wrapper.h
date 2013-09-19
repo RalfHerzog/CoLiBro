@@ -24,7 +24,6 @@
 #include "html.h"
 #include "http_ssl.h"
 #include "http_sqlite.h"
-#include "http_data.h"
 #include "http_post.h"
 #include "getch.h"
 
@@ -118,8 +117,8 @@ struct HTTP{
   char* server;
   char* download_folder;
 
-  char* postData;
-  unsigned int postData_size;
+  char* post_data;
+  unsigned int post_data_size;
 
   struct HTTP_ERROR error;
   struct hostent* hostent;
@@ -127,8 +126,9 @@ struct HTTP{
   struct HTTP_HEADER* header;
   struct HTTP_SSL_Connection ssl;
 
-  struct HTTP_POST_FORM_MULTIPART_DATA* form_multipart_data;
-  struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* form_urlencoded_data;
+  enum { HTTP_POST_METHOD } post_method;
+  struct HTTP_POST_FORM_MULTIPART_DATA* post_form_multipart_data;
+  struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* post_form_urlencoded_data;
 
   sqlite3*      sqlite_handle;
   sqlite3_stmt* stmt;
