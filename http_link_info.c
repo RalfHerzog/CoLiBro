@@ -143,7 +143,7 @@ void http_get_link_host( const char* sLink, char** sHost, int* length )
       return;
     }
 
-    fTld = fopen( "http_wrapper.tld", "r" );
+    fTld = fopen( "http_wrapper.tld", "rb" );
     if ( fTld == NULL )
     {
       for ( j = 0 ; j < sizeof( TLD_OFFLINE ) / sizeof( char* ) ; j++ )
