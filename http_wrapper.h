@@ -117,6 +117,9 @@ struct HTTP{
   char* server;
   char* download_folder;
 
+  char* postData;
+  unsigned int postData_size;
+
   struct HTTP_ERROR error;
   struct hostent* hostent;
   struct sockaddr_in addr;
