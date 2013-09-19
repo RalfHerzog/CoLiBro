@@ -96,6 +96,22 @@ enum HTTP_ERROR_STATUS {
   HTTP_ERROR_DOWNLOAD_FILE_TOO_BIG
 };
 
+struct HTTP_POST_MULTIPART_FORM_DATA_ITEM {
+  unsigned char* name;
+  unsigned char* filename;
+  unsigned char* content_type; // 	application/octet-stream by default?
+
+  unsigned char* data;
+
+};
+
+struct HTTP_POST_MULTIPART_FORM_DATA {
+
+  unsigned char* boundary;
+  struct HTTP_POST_MULTIPART_FORM_DATA_ITEM* items;
+
+};
+
 struct HTTP_LIST{
   char* data;
   int size;
