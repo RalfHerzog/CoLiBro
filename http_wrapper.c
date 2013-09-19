@@ -378,7 +378,7 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   /** Method */
   if ( http->header->method == NULL )
   {
-    if ( http->post_data != NULL )
+    if ( http->post_method != HTTP_POST_METHOD_NONE )
     {
       http->header->method = new_string("POST");
     }
@@ -541,16 +541,8 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   http_header_field_iterator_free( &header_field_it );
 
   /** Append post_data-field */
-  if ( !strcmpi( http->header->method, "POST" ) )
+  if ( http->post_method != HTTP_POST_METHOD_NONE )
   {
-    if ( http->post_data == NULL )
-    {
-      http->error.errorId = HTTP_ERROR_NO_POST_DATA_PRESENT;
-      http->error.line = __LINE__;
-      http->error.file = __FILE__;
-      return;
-    }
-
     switch( http->post_method )
     {
       case HTTP_POST_METHOD_PLAIN:
@@ -593,17 +585,45 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   /// End of header
   strcat( *query, HTTP_HEADER_NEWLINE );
 
-  /** Is there post_data to send? */
-  if ( !strcmpi( http->header->method, "POST" ) )
+  *size = strlen( *query );
+
+  /** Is request a post? */
+  if ( http->post_method != HTTP_POST_METHOD_NONE )
   {
+    /** Is there post_data to send? */
+    if ( http->post_data == NULL || http->post_data_size == 0 )
+    {
+      http->error.errorId = HTTP_ERROR_NO_POST_DATA_PRESENT;
+      http->error.line = __LINE__;
+      http->error.file = __FILE__;
+      return;
+    }
     strncat( *query, http->post_data, http->post_data_size );
-//    free( http->post_data );
-//    http->post_data = NULL;
+    *size += http->post_data_size;
+
+    switch( http->post_method )
+    {
+      case HTTP_POST_METHOD_PLAIN:
+        // Nothing to be done here
+        break;
+      case HTTP_POST_METHOD_URLENCODED:
+        http_post_form_urlencoded_free( http->post_form_urlencoded_data );
+        break;
+      case HTTP_POST_METHOD_MULTIPART_DATA:
+        // TODO: Free multipart data
+        break;
+      default:
+        http->error.errorId = HTTP_ERROR_POST_METHOD_UNKNOWN;
+        http->error.line = __LINE__;
+        http->error.file = __FILE__;
+        return;
+    }
+    free( http->post_data );
+    http->post_data = NULL;
   }
   free( http->header->method );
   http->header->method = NULL;
 
-  *size = strlen( *query );
   return;
 }
 void http_log_write( struct HTTP* http, const char* str, unsigned int mode )

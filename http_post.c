@@ -88,3 +88,24 @@ unsigned int http_post_form_urlencoded_get_data( char** content, struct HTTP* ht
 
   return content_length-1;
 }
+
+void http_post_form_urlencoded_free( struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* http_post_form_urlencoded_data )
+{
+  if ( http_post_form_urlencoded_data->next == NULL )
+  {
+    return;
+  }
+  http_post_form_urlencoded_free( http_post_form_urlencoded_data->next );
+
+  free( http_post_form_urlencoded_data->key );
+  http_post_form_urlencoded_data->key = NULL;
+
+  free( http_post_form_urlencoded_data->value );
+  http_post_form_urlencoded_data->value = NULL;
+
+  http_post_form_urlencoded_data->key_length = 0;
+  http_post_form_urlencoded_data->value_length = 0;
+
+  free( http_post_form_urlencoded_data->next );
+  http_post_form_urlencoded_data->next = NULL;
+}
