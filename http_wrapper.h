@@ -25,6 +25,7 @@
 #include "http_ssl.h"
 #include "http_sqlite.h"
 #include "http_data.h"
+#include "http_post.h"
 #include "getch.h"
 
 #define HTTP_PORT 80
@@ -96,22 +97,6 @@ enum HTTP_ERROR_STATUS {
   HTTP_ERROR_DOWNLOAD_FILE_TOO_BIG
 };
 
-struct HTTP_POST_MULTIPART_FORM_DATA_ITEM {
-  unsigned char* name;
-  unsigned char* filename;
-  unsigned char* content_type; // 	application/octet-stream by default?
-
-  unsigned char* data;
-
-};
-
-struct HTTP_POST_MULTIPART_FORM_DATA {
-
-  unsigned char* boundary;
-  struct HTTP_POST_MULTIPART_FORM_DATA_ITEM* items;
-
-};
-
 struct HTTP_LIST{
   char* data;
   int size;
@@ -141,6 +126,9 @@ struct HTTP{
   struct sockaddr_in addr;
   struct HTTP_HEADER* header;
   struct HTTP_SSL_Connection ssl;
+
+  struct HTTP_POST_FORM_MULTIPART_DATA* form_multipart_data;
+  struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* form_urlencoded_data;
 
   sqlite3*      sqlite_handle;
   sqlite3_stmt* stmt;
