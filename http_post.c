@@ -91,6 +91,10 @@ unsigned int http_post_form_urlencoded_get_data( char** content, struct HTTP* ht
 
 void http_post_form_urlencoded_free( struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* http_post_form_urlencoded_data )
 {
+  if ( http_post_form_urlencoded_data == NULL )
+  {
+    return;
+  }
   if ( http_post_form_urlencoded_data->next == NULL )
   {
     return;
