@@ -109,3 +109,66 @@ void http_post_form_urlencoded_free( struct HTTP_POST_FORM_URLENCODED_DATA_ITEM*
   free( http_post_form_urlencoded_data->next );
   http_post_form_urlencoded_data->next = NULL;
 }
+
+/*
+void http_post_form_multipart_init( struct HTTP* http )
+{
+  http->post_form_multipart_data = (struct HTTP_POST_FORM_MULTIPART_DATA*)malloc( sizeof( struct HTTP_POST_FORM_MULTIPART_DATA ) );
+  memset( http->post_form_multipart_data, 0, sizeof( struct HTTP_POST_FORM_MULTIPART_DATA ) );
+
+  http->post_form_multipart_data->boundary =
+
+}
+*/
+
+unsigned char* __http_post_form_multipart_generate_boundary()
+{
+  // application/octet-stream
+  return NULL;
+}
+
+/*
+void http_post_form_multipart_free( struct HTTP_POST_FORM_MULTIPART_DATA* data_item )
+{
+  if ( data_item->next == NULL )
+  {
+    return;
+  }
+  http_post_form_urlencoded_free( http_post_form_urlencoded_data->next );
+
+  free( http_post_form_urlencoded_data->key );
+  http_post_form_urlencoded_data->key = NULL;
+
+  free( http_post_form_urlencoded_data->value );
+  http_post_form_urlencoded_data->value = NULL;
+
+  http_post_form_urlencoded_data->key_length = 0;
+  http_post_form_urlencoded_data->value_length = 0;
+
+  free( http_post_form_urlencoded_data->next );
+  http_post_form_urlencoded_data->next = NULL;
+}
+*/
+
+/*
+void http_post_form_multipart_free_items( struct HTTP_POST_FORM_MULTIPART_DATA_ITEM* data_items )
+{
+  if ( data_items->next == NULL )
+  {
+    return;
+  }
+  http_post_form_multipart_free_items( data_items->next );
+
+  free( data_items-> );
+  http_post_form_urlencoded_data->key = NULL;
+
+  free( http_post_form_urlencoded_data->value );
+  http_post_form_urlencoded_data->value = NULL;
+
+  http_post_form_urlencoded_data->key_length = 0;
+  http_post_form_urlencoded_data->value_length = 0;
+
+  free( http_post_form_urlencoded_data->next );
+  http_post_form_urlencoded_data->next = NULL;
+}
+*/

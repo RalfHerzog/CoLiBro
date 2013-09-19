@@ -113,6 +113,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
   int socket;
   unsigned int post_data_size;
   struct HTTP_HEADER* header;
+  struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* post_form_urlencoded_data;
 
   void (*connect_func)(struct HTTP*);
   int (*recv_func)(struct HTTP*, void*, size_t);
@@ -164,6 +165,8 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     free( http->download_folder );
     free( http->post_data );
     free( http->header );
+    http_post_form_urlencoded_free( http->post_form_urlencoded_data );
+
     http_alloc( http, HTTP_RESET );
   }
   if ( reset & HTTP_FREE_WITHOUT_PERSISTENT_DATA )
@@ -175,6 +178,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     lastResult = http->last_result;
     post_data = http->post_data;
     post_data_size = http->post_data_size;
+    post_form_urlencoded_data = http->post_form_urlencoded_data;
 
     connect_func = http->connect_func;
     recv_func = http->recv_func;
@@ -184,6 +188,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     http->server = NULL;
     http->download_folder = NULL;
     http->post_data = NULL;
+    http->post_form_urlencoded_data = NULL;
 
     if ( reset & HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA )
     {
@@ -204,6 +209,7 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
     http->last_result = lastResult;
     http->post_data = post_data;
     http->post_data_size = post_data_size;
+    http->post_form_urlencoded_data = post_form_urlencoded_data;
 
     http->connect_func = connect_func;
     http->recv_func = recv_func;

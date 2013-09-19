@@ -32,6 +32,8 @@ unsigned char http_post_form_urlencoded_add( struct HTTP* http, const char* key,
 unsigned int http_post_form_urlencoded_get_data( char** content, struct HTTP* http );
 void http_post_form_urlencoded_free( struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* http_post_form_urlencoded_data );
 
+void http_post_form_multipart_init( struct HTTP* http );
+
 int http_post_encode(char **dest, const unsigned char *src, int length);
 
 #endif // HTTP_POST_H_INCLUDED

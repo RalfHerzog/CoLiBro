@@ -134,7 +134,7 @@ struct HTTP{
     HTTP_POST_METHOD_MULTIPART_DATA
   } post_method;
 
-  struct HTTP_POST_FORM_MULTIPART_DATA* post_form_multipart_data;
+  // struct HTTP_POST_FORM_MULTIPART_DATA* post_form_multipart_data;
   struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* post_form_urlencoded_data;
 
   sqlite3*      sqlite_handle;
