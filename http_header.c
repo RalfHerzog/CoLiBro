@@ -3,7 +3,7 @@
 void http_header_field_iterator_init( struct HTTP_HEADER_FIELD_ITERATOR* it, struct HTTP* http, void* current )
 {
   it->http = http;
-  //it->current = &http->header->additionalServerFields;
+  //it->current = &http->header->additional_server_fields;
   it->current = (struct HTTP_HEADER_FIELD*)current;
 }
 HTTP_BOOL http_header_field_iterator_hasNext( struct HTTP_HEADER_FIELD_ITERATOR* it )
@@ -31,8 +31,8 @@ void http_header_remove_client_field(struct HTTP_HEADER* header, const char* key
   struct HTTP_HEADER_FIELD* field_prev;
   struct HTTP_HEADER_FIELD* field;
 
-  field_prev = &header->additionalClientFields;
-  field = &header->additionalClientFields;
+  field_prev = &header->additional_client_fields;
+  field = &header->additional_client_fields;
   while( field->next != NULL )
   {
     if ( !strcmp( field->key, key ) )
@@ -56,7 +56,7 @@ void http_header_add_client_field( struct HTTP_HEADER* header, const char* key, 
 {
   struct HTTP_HEADER_FIELD* field;
 
-  field = &header->additionalClientFields;
+  field = &header->additional_client_fields;
   while( field->next != NULL )
   {
     if ( !strcmp( field->key, key ) )
@@ -85,7 +85,7 @@ void http_header_add_server_field( struct HTTP_HEADER* header, const char* key, 
 {
   struct HTTP_HEADER_FIELD* field;
 
-  field = &header->additionalServerFields;
+  field = &header->additional_server_fields;
   while( field->next != NULL )
   {
     field = field->next;
@@ -99,8 +99,8 @@ void http_header_add_server_field( struct HTTP_HEADER* header, const char* key, 
 
 void http_header_init( struct HTTP_HEADER** header, HTTP_HEX reset )
 {
-  char* remoteFile;
-  char* connectionState;
+  char* remote_file;
+  char* connection_state;
   char* originalQuery;
   struct HTTP_COOKIE* cookies;
   struct HTTP_HEADER_FIELD clientFields;
@@ -108,15 +108,15 @@ void http_header_init( struct HTTP_HEADER** header, HTTP_HEX reset )
   if ( reset & HTTP_HEADER_RESET )
   {
     cookies = (*header)->cookies;
-    memcpy( &clientFields, &(*header)->additionalClientFields, sizeof( struct HTTP_HEADER_FIELD ) );
+    memcpy( &clientFields, &(*header)->additional_client_fields, sizeof( struct HTTP_HEADER_FIELD ) );
 
     memset( *header, 0, sizeof( struct HTTP_HEADER ) );
 
     (*header)->cookies = cookies;
-    memcpy( &(*header)->additionalClientFields, &clientFields, sizeof( struct HTTP_HEADER_FIELD ) );
+    memcpy( &(*header)->additional_client_fields, &clientFields, sizeof( struct HTTP_HEADER_FIELD ) );
 
     http_header_cookie_free( (*header)->cookies );
-    memset( &(*header)->additionalServerFields, 0, sizeof( struct HTTP_HEADER_FIELD ) );
+    memset( &(*header)->additional_server_fields, 0, sizeof( struct HTTP_HEADER_FIELD ) );
     return;
   }
   if ( reset & HTTP_HEADER_INIT )
@@ -125,7 +125,7 @@ void http_header_init( struct HTTP_HEADER** header, HTTP_HEX reset )
     (*header)->cookies = (struct HTTP_COOKIE*)malloc( sizeof( struct HTTP_COOKIE ) );
     memset( (*header)->cookies, 0, sizeof( struct HTTP_COOKIE ) );
 
-    memset( &(*header)->additionalClientFields, 0, sizeof( struct HTTP_HEADER_FIELD ) );
+    memset( &(*header)->additional_client_fields, 0, sizeof( struct HTTP_HEADER_FIELD ) );
 
     http_header_init( header, HTTP_HEADER_RESET );
 
@@ -137,16 +137,16 @@ void http_header_init( struct HTTP_HEADER** header, HTTP_HEX reset )
     free( (*header)->status.version );
     free( (*header)->status.responseText );
     free( (*header)->server );
-    free( (*header)->remoteFile );
+    free( (*header)->remote_file );
     free( (*header)->arguments );
-    free( (*header)->connectionState );
-    free( (*header)->transferEncoding );
-    free( (*header)->contentType );
+    free( (*header)->connection_state );
+    free( (*header)->transfer_encoding );
+    free( (*header)->content_type );
     free( (*header)->location );
 
     http_header_cookie_free( (*header)->cookies );
-    http_header_fields_free( &(*header)->additionalClientFields );
-    http_header_fields_free( &(*header)->additionalServerFields );
+    http_header_fields_free( &(*header)->additional_client_fields );
+    http_header_fields_free( &(*header)->additional_server_fields );
     http_header_init( header, HTTP_HEADER_RESET );
   }
   if ( reset & HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA )
@@ -156,25 +156,25 @@ void http_header_init( struct HTTP_HEADER** header, HTTP_HEX reset )
     free( (*header)->status.responseText );
     free( (*header)->server );
     free( (*header)->arguments );
-    free( (*header)->transferEncoding );
-    free( (*header)->contentType );
+    free( (*header)->transfer_encoding );
+    free( (*header)->content_type );
     free( (*header)->location );
 
-    remoteFile = (*header)->remoteFile;
-    connectionState = (*header)->connectionState;
+    remote_file = (*header)->remote_file;
+    connection_state = (*header)->connection_state;
     cookies = (*header)->cookies;
     originalQuery = (*header)->originalQuery;
 
-    (*header)->remoteFile = NULL;
-    (*header)->connectionState = NULL;
+    (*header)->remote_file = NULL;
+    (*header)->connection_state = NULL;
     (*header)->cookies = NULL;
     (*header)->originalQuery = NULL;
 
-    http_header_fields_free( &(*header)->additionalServerFields );
+    http_header_fields_free( &(*header)->additional_server_fields );
     http_header_init( header, HTTP_HEADER_RESET );
 
-    (*header)->remoteFile = remoteFile;
-    (*header)->connectionState = connectionState;
+    (*header)->remote_file = remote_file;
+    (*header)->connection_state = connection_state;
     (*header)->cookies = cookies;
     (*header)->originalQuery = originalQuery;
   }
@@ -231,23 +231,23 @@ void http_header_assign_line( struct HTTP* http, const char* line, int size )
   }
   if ( !strcmpi( key, "Connection" ) )
   {
-    http->header->connectionState = new_string( value );
+    http->header->connection_state = new_string( value );
   }
   if ( !strcmpi( key, "Content-Length" ) )
   {
-    http->header->contentLength = atoi( value );
+    http->header->content_length = atoi( value );
   }
   if ( !strcmpi( key, "Content-Type" ) )
   {
-    http->header->contentType = new_string( value );
+    http->header->content_type = new_string( value );
   }
   if ( !strcmpi( key, "Content-Encoding" ) )
   {
-    http->header->contentEncoding = new_string( value );
+    http->header->content_encoding = new_string( value );
   }
   if ( !strcmpi( key, "Transfer-Encoding" ) )
   {
-    http->header->transferEncoding = new_string( value );
+    http->header->transfer_encoding = new_string( value );
   }
   if ( !strcmpi( key, "Location" ) )
   {
@@ -255,7 +255,7 @@ void http_header_assign_line( struct HTTP* http, const char* line, int size )
   }
   if ( !strcmpi( key, "WWW-Authenticate" ) )
   {
-    http->header->wwwAutheticate = new_string( value );
+    http->header->www_authenticate = new_string( value );
   }
 
   http_header_add_server_field( http->header, key, value, HTTP_HEADER_FIELD_VOID );

@@ -367,7 +367,7 @@ void http_link_get_info ( struct HTTP* http, struct HTTP_LINK_INFO* http_info, c
 
   if ( sSubdir == NULL )
   {
-    http_get_link_subdir( http->header->remoteFile, &sSubdir_old, &currentSize );
+    http_get_link_subdir( http->header->remote_file, &sSubdir_old, &currentSize );
     sSubdir = sSubdir_old;
     size += currentSize + 1;
   }
@@ -376,7 +376,7 @@ void http_link_get_info ( struct HTTP* http, struct HTTP_LINK_INFO* http_info, c
     sSubdir_old = sSubdir;
 
     sSubdir = NULL;
-    http_get_link_subdir( http->header->remoteFile, &sSubdir, &currentSize );
+    http_get_link_subdir( http->header->remote_file, &sSubdir, &currentSize );
 
     sTmp = (char*)malloc( currentSize + strlen( sSubdir_old ) + 1 );
     strcpy( sTmp, sSubdir );

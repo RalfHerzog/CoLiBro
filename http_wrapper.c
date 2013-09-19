@@ -401,15 +401,15 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   */
 
   /** Remote file */
-  if ( http->header->remoteFile == NULL )
+  if ( http->header->remote_file == NULL )
   {
-    http->header->remoteFile = new_string("/");
+    http->header->remote_file = new_string("/");
   }
-  else if ( *http->header->remoteFile != '/' )
+  else if ( *http->header->remote_file != '/' )
   {
     strcat( *query, "/" );
   }
-  strcat( *query, http->header->remoteFile );
+  strcat( *query, http->header->remote_file );
 
   /** Arguments */
   if ( http->header->arguments != NULL )
@@ -438,20 +438,20 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
 
   /** User-Agent */
   strcat( *query, "User-Agent: " );
-  if ( http->header->userAgent == NULL )
+  if ( http->header->user_agent == NULL )
   {
     if ( http_get_opt( http, HTTP_OPTION_USER_AGENT_MOBILE ) )
     {
       /** Mobile user-agent */
-      http->header->userAgent = new_string( HTTP_HEADER_USER_AGENT_MOBILE );
+      http->header->user_agent = new_string( HTTP_HEADER_USER_AGENT_MOBILE );
     }
     else
     {
       /** Desktop user-agent */
-      http->header->userAgent = new_string( HTTP_HEADER_USER_AGENT_DESKTOP );
+      http->header->user_agent = new_string( HTTP_HEADER_USER_AGENT_DESKTOP );
     }
   }
-  strcat( *query, http->header->userAgent );
+  strcat( *query, http->header->user_agent );
   strcat( *query, HTTP_HEADER_NEWLINE );
 
   /** Accept */
@@ -467,7 +467,7 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   strcat( *query, HTTP_HEADER_NEWLINE );
 
   http_sqlite_cookie_server( http->server, &sqlite_server );
-  http_sqlite_cookie_path( http->header->remoteFile, &sqlite_path );
+  http_sqlite_cookie_path( http->header->remote_file, &sqlite_path );
 
   /** Cookies */
   if ( !http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
@@ -507,15 +507,15 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
 
   /** Connection */
   strcat( *query, "Connection: " );
-  if ( http->header->connectionState == NULL )
+  if ( http->header->connection_state == NULL )
   {
-    http->header->connectionState = new_string("Keep-Alive");
+    http->header->connection_state = new_string("Keep-Alive");
   }
-  strcat( *query, http->header->connectionState );
+  strcat( *query, http->header->connection_state );
   strcat( *query, HTTP_HEADER_NEWLINE );
 
   /** Append user-defined fields */
-  http_header_field_iterator_init( &header_field_it, http, &http->header->additionalClientFields );
+  http_header_field_iterator_init( &header_field_it, http, &http->header->additional_client_fields );
   while ( http_header_field_iterator_hasNext( &header_field_it ) )
   {
     header_field = http_header_field_iterator_next( &header_field_it );
@@ -653,7 +653,7 @@ void http_query( struct HTTP* http )
 
   if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
   {
-    printf("Sending... %.4s [ %s ]", query, http->header->remoteFile );
+    printf("Sending... %.4s [ %s ]", query, http->header->remote_file );
     fflush( stdout );
   }
 
@@ -724,7 +724,7 @@ void http_read_response( struct HTTP* http )
 
   http_log_write( http, "", 1 );
 
-  if ( http->header->connectionState == NULL || !strcmpi( http->header->connectionState, "close" ) )
+  if ( http->header->connection_state == NULL || !strcmpi( http->header->connection_state, "close" ) )
   {
     http_set_opt( http, HTTP_OPTION_CONNETION_CLOSE_AFTER_TRANSMISSION, 1 );
   }
@@ -745,19 +745,19 @@ void http_read_response( struct HTTP* http )
       }
       else if ( ( http->header->status.responseId / 100 ) % 10 == 2 )
       {
-        if ( http->header->transferEncoding != NULL )
+        if ( http->header->transfer_encoding != NULL )
         {
-          printf("[ %s, %s ( %s ) ]", http->header->remoteFile, http->header->contentType, http->header->transferEncoding );
+          printf("[ %s, %s ( %s ) ]", http->header->remote_file, http->header->content_type, http->header->transfer_encoding );
         }
         else
         {
-          if ( http->header->contentLength > 0 )
+          if ( http->header->content_length > 0 )
           {
-            printf("[ %s, %s ( %i Bytes ) ]", http->header->remoteFile, http->header->contentType, http->header->contentLength );
+            printf("[ %s, %s ( %i Bytes ) ]", http->header->remote_file, http->header->content_type, http->header->content_length );
           }
           else
           {
-            printf("[ %s, %s ( 0 byte or unknown size ) ]", http->header->remoteFile, http->header->contentType );
+            printf("[ %s, %s ( 0 byte or unknown size ) ]", http->header->remote_file, http->header->content_type );
           }
         }
       }
@@ -1082,7 +1082,7 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
   }
 
   http_set_opt( http, HTTP_OPTION_CONTENT_BINARY, 0 );
-  if ( http->header->contentType != NULL && !strstr( http->header->contentType, "text" ) )
+  if ( http->header->content_type != NULL && !strstr( http->header->content_type, "text" ) )
   {
     /** Content is binary */
     http_set_opt( http, HTTP_OPTION_CONTENT_BINARY, 1 );
@@ -1090,7 +1090,7 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
 
   if ( http_get_opt( http, HTTP_OPTION_DOWNLOAD_FILES ) )
   {
-    http_link_get_info( http, &link, http->header->remoteFile );
+    http_link_get_info( http, &link, http->header->remote_file );
     if ( link.file != NULL )
     {
       if ( size != NULL )
@@ -1109,11 +1109,11 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
   if ( pContent == NULL )
   {
     /** Dummy read for clearing socket */
-    if ( http->header->contentLength != 0 )
+    if ( http->header->content_length != 0 )
     {
       content = (char*)malloc( mem_size );
 
-      size_left_to_recv = http->header->contentLength;
+      size_left_to_recv = http->header->content_length;
       do
       {
         if ( size_left_to_recv >= mem_size )
@@ -1132,22 +1132,22 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
 
     if ( size != NULL )
     {
-      *size = http->header->contentLength;
+      *size = http->header->content_length;
     }
     return;
   }
 
-  if ( http->header->transferEncoding != NULL &&
-        stristr( http->header->transferEncoding, "chunked" ) )
+  if ( http->header->transfer_encoding != NULL &&
+        stristr( http->header->transfer_encoding, "chunked" ) )
   {
     http_recv_chunked( http, &content, &size_tmp );
     http_header_recv_line( http, NULL, NULL );
   }
   else
   {
-    if ( http->header->contentLength != 0 && http->header->transferEncoding == NULL )
+    if ( http->header->content_length != 0 && http->header->transfer_encoding == NULL )
     {
-      if ( http->header->contentLength > 100 * ( 1024 * 1024 ) )
+      if ( http->header->content_length > 100 * ( 1024 * 1024 ) )
       {
         http->error.errorId = HTTP_ERROR_DOWNLOAD_FILE_TOO_BIG;
         http->error.line = __LINE__;
@@ -1165,9 +1165,9 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
         return;
       }
 
-      content = (char*)malloc( http->header->contentLength+1 );
-      http_raw_recv( http, &content, http->header->contentLength, &size_tmp );
-      memset( content+http->header->contentLength, 0, 1 );
+      content = (char*)malloc( http->header->content_length+1 );
+      http_raw_recv( http, &content, http->header->content_length, &size_tmp );
+      memset( content+http->header->content_length, 0, 1 );
     }
     else
     {
@@ -1177,7 +1177,7 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
   /** If content is encoded and a source or text, decode it */
   if (  http_get_opt( http, HTTP_OPTION_CONTENT_BINARY ) == HTTP_BOOL_FALSE )
   {
-    if ( http->header->contentEncoding != NULL )
+    if ( http->header->content_encoding != NULL )
     {
       if ( inflateData( &content_tmp, &size_out, (unsigned char*)content, size_tmp ) == HTTP_BOOL_TRUE )
       {
@@ -1264,7 +1264,7 @@ void http_reconnect( struct HTTP* http, const char* sNewHost, const unsigned sho
     }
     else
     {
-      if ( http->header->connectionState != NULL && !strcmpi( http->header->connectionState, "keep-alive" ) )
+      if ( http->header->connection_state != NULL && !strcmpi( http->header->connection_state, "keep-alive" ) )
       {
         if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
         {
@@ -1303,7 +1303,7 @@ void http_handle_response( struct HTTP* http )
     return;
   }
 
-  if ( http->header->connectionState == NULL || !strcmpi( http->header->connectionState, "close") )
+  if ( http->header->connection_state == NULL || !strcmpi( http->header->connection_state, "close") )
   {
     http_set_opt( http, HTTP_OPTION_CONNETION_CLOSE_AFTER_TRANSMISSION, 1 );
   }
@@ -1394,9 +1394,9 @@ void http_get_authorization_password( struct HTTP* http, char** str )
   char c;
 
   *str = NULL;
-  if ( !strncmpi( http->header->wwwAutheticate, "Basic", 5 ) )
+  if ( !strncmpi( http->header->www_authenticate, "Basic", 5 ) )
   {
-    html_tag_get_parameter_field( http->header->wwwAutheticate, "realm", &value, NULL );
+    html_tag_get_parameter_field( http->header->www_authenticate, "realm", &value, NULL );
     printf( "--- Note: To cancel login process leave username and password empty ---\n" );
     printf( "Login required ( \"%s\" ):\n", value );
 
@@ -1469,7 +1469,7 @@ void http_get_authorization_password( struct HTTP* http, char** str )
     strcat( *str, base64_decoded_string );
     free( base64_decoded_string );
   }
-  if ( !strncmpi( http->header->wwwAutheticate, "Digest", 6 ) )
+  if ( !strncmpi( http->header->www_authenticate, "Digest", 6 ) )
   {
     http->error.errorId = HTTP_ERROR_NOT_IMPLEMENTED_YET;
     http->error.line = __LINE__;
@@ -1480,29 +1480,29 @@ void http_get_authorization_password( struct HTTP* http, char** str )
 void http_parse_link( struct HTTP* http )
 {
   struct HTTP_LINK_INFO link_info;
-  char* remoteFile;
+  char* remote_file;
 
   http_link_get_info( http, &link_info, http->header->originalQuery );
 
-  remoteFile = (char*)malloc( link_info.size );
-  memset( remoteFile, 0, link_info.size );
+  remote_file = (char*)malloc( link_info.size );
+  memset( remote_file, 0, link_info.size );
 
   if ( link_info.subdir != NULL )
   {
-    strcat( remoteFile, link_info.subdir );
+    strcat( remote_file, link_info.subdir );
   }
   if ( link_info.file != NULL )
   {
-    strcat( remoteFile, link_info.file );
+    strcat( remote_file, link_info.file );
   }
   if ( link_info.parameters != NULL )
   {
     if ( link_info.subdir == NULL && link_info.file == NULL )
     {
-      strcat( remoteFile, "/" );
+      strcat( remote_file, "/" );
     }
-    strcat( remoteFile, "?" );
-    strcat( remoteFile, link_info.parameters );
+    strcat( remote_file, "?" );
+    strcat( remote_file, link_info.parameters );
   }
 
   if ( !strcmpi( link_info.protocol, "https" ) )
@@ -1542,10 +1542,10 @@ void http_parse_link( struct HTTP* http )
     }
   }
 
-  if ( *remoteFile == '\0' )
+  if ( *remote_file == '\0' )
   {
-    free( remoteFile );
-    remoteFile = NULL;
+    free( remote_file );
+    remote_file = NULL;
   }
 
   if ( strcmpi( http->server, link_info.host ) )
@@ -1554,10 +1554,10 @@ void http_parse_link( struct HTTP* http )
     free( http->server );
     http->server = new_string( link_info.host );
   }
-  free( http->header->remoteFile );
+  free( http->header->remote_file );
 
   http_link_info_free( &link_info );
-  http->header->remoteFile = remoteFile;
+  http->header->remote_file = remote_file;
 }
 void http_get_page( struct HTTP* http, const char* link, char** content, int* size )
 {
@@ -1659,7 +1659,7 @@ int http_save_data_to_file( struct HTTP* http, const char* file )
 
   content = (char*)malloc( mem_size );
 
-  size_left_to_recv = http->header->contentLength;
+  size_left_to_recv = http->header->content_length;
   do
   {
     if ( size_left_to_recv >= mem_size )
@@ -1679,7 +1679,7 @@ int http_save_data_to_file( struct HTTP* http, const char* file )
   fclose( fFile );
   free( content );
 
-  return http->header->contentLength;
+  return http->header->content_length;
 }
 void http_close( struct HTTP* http )
 {
@@ -1720,15 +1720,15 @@ void http_write_memory_dump( struct HTTP* http, FILE* fFile )
     fprintf( fFile, "status-verion: %s\n", http->header->status.version );
 
     fprintf( fFile, "method: %s\n", http->header->method );
-    fprintf( fFile, "remoteFile: %s\n", http->header->remoteFile );
+    fprintf( fFile, "remote_file: %s\n", http->header->remote_file );
     fprintf( fFile, "arguments: %s\n", http->header->arguments );
     fprintf( fFile, "server: %s\n", http->header->server );
-    fprintf( fFile, "connectionState: %s\n", http->header->connectionState );
-    fprintf( fFile, "contentLength: %i\n", http->header->contentLength );
-    fprintf( fFile, "contentType: %s\n", http->header->contentType );
-    fprintf( fFile, "transferEncoding: %s\n", http->header->transferEncoding );
-    fprintf( fFile, "userAgent: %s\n", http->header->userAgent );
-    fprintf( fFile, "wwwAutheticate: %s\n", http->header->wwwAutheticate );
+    fprintf( fFile, "connection_state: %s\n", http->header->connection_state );
+    fprintf( fFile, "content_length: %i\n", http->header->content_length );
+    fprintf( fFile, "content_type: %s\n", http->header->content_type );
+    fprintf( fFile, "transfer_encoding: %s\n", http->header->transfer_encoding );
+    fprintf( fFile, "user_agent: %s\n", http->header->user_agent );
+    fprintf( fFile, "www_authenticate: %s\n", http->header->www_authenticate );
     fprintf( fFile, "post_data: %s\n", http->post_data );
     fprintf( fFile, "cookies: %p\n", http->header->cookies );
 
@@ -1741,8 +1741,8 @@ void http_write_memory_dump( struct HTTP* http, FILE* fFile )
     http_header_cookie_iterator_free( &cookie_it );
     */
 
-    fprintf( fFile, "additionalClientFields: %p\n", &http->header->additionalClientFields );
-    http_header_field_iterator_init( &field_it, http, &http->header->additionalClientFields );
+    fprintf( fFile, "additional_client_fields: %p\n", &http->header->additional_client_fields );
+    http_header_field_iterator_init( &field_it, http, &http->header->additional_client_fields );
     while( http_header_field_iterator_hasNext( &field_it ) )
     {
       field = http_header_field_iterator_next( &field_it );
@@ -1750,8 +1750,8 @@ void http_write_memory_dump( struct HTTP* http, FILE* fFile )
     }
     http_header_field_iterator_free( &field_it );
 
-    fprintf( fFile, "additionalServerFields: %p\n", &http->header->additionalServerFields );
-    http_header_field_iterator_init( &field_it, http, &http->header->additionalServerFields );
+    fprintf( fFile, "additional_server_fields: %p\n", &http->header->additional_server_fields );
+    http_header_field_iterator_init( &field_it, http, &http->header->additional_server_fields );
     while( http_header_field_iterator_hasNext( &field_it ) )
     {
       field = http_header_field_iterator_next( &field_it );

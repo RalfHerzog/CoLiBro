@@ -63,23 +63,23 @@ struct HTTP_HEADER_STATUS {
 struct HTTP_HEADER {
   struct HTTP_HEADER_STATUS status;
   char* method;
-  char* remoteFile;
+  char* remote_file;
   char* arguments;
   char* server;
-  char* connectionState;
-  int   contentLength;
-  char* contentType;
-  char* contentEncoding;  /* eg. Gzip */
-  char* transferEncoding; /* chunked */
+  char* connection_state;
+  int   content_length;
+  char* content_type;
+  char* content_encoding;  /* eg. Gzip */
+  char* transfer_encoding; /* chunked */
   char* location;
-  char* userAgent;
-  char* wwwAutheticate;
+  char* user_agent;
+  char* www_authenticate;
 
   char* originalQuery;
 
   struct HTTP_COOKIE* cookies;
-  struct HTTP_HEADER_FIELD additionalClientFields;
-  struct HTTP_HEADER_FIELD additionalServerFields;
+  struct HTTP_HEADER_FIELD additional_client_fields;
+  struct HTTP_HEADER_FIELD additional_server_fields;
 };
 
 void http_header_init( struct HTTP_HEADER** header, unsigned int reset );
