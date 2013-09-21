@@ -334,6 +334,8 @@ void http_header_recv_line( struct HTTP* http, char** line, int* size )
 }
 void http_header_follow( struct HTTP* http )
 {
+  char* header;
+
   if ( http->error.errorId != 0 )
   {
     return;
@@ -349,7 +351,10 @@ void http_header_follow( struct HTTP* http )
   http_parse_link( http );
   http_reconnect( http, http->server, http->port );
 
-  http_query( http );
+  http_prepare_header_static( http, &header );
+  __http_send_request_data( http, header );
+  free( header );
+
   http_read_response( http );
 
   http_handle_response( http );

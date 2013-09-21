@@ -365,7 +365,7 @@ void http_set_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option, ... )
   }
   return;
 }
-void http_prepare_query( struct HTTP* http, char** query, int* size )
+void http_prepare_header( struct HTTP* http, char** query )
 {
   struct HTTP_HEADER_FIELD_ITERATOR header_field_it = {0};
   struct HTTP_HEADER_FIELD* header_field = NULL;
@@ -376,10 +376,8 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
     return;
   }
 
-  *size = 0;
-
-  *query = (char*)malloc( 5*1024*1024 );
-  memset( *query, 0, 5*1024*1024 );
+  *query = (char*)malloc( 1*1024*1024 );
+  memset( *query, 0, 1*1024*1024 );
 
   /** Method */
   if ( http->header->method == NULL )
@@ -546,87 +544,17 @@ void http_prepare_query( struct HTTP* http, char** query, int* size )
   }
   http_header_field_iterator_free( &header_field_it );
 
-  /** Append post_data-field */
+
   if ( http->post_method != HTTP_POST_METHOD_NONE )
   {
-    switch( http->post_method )
-    {
-      case HTTP_POST_METHOD_PLAIN:
-        http->post_data_size = my_strlen( http->post_data );
-
-        if ( !strncmpi( http->post_data, "<?xml", 5 ) )
-        {
-          strcat( *query, "Content-Type: text/xml;charset=utf-8" );
-        }
-        /** Add more magic number types here */
-        break;
-      case HTTP_POST_METHOD_URLENCODED:
-        strcat( *query, "Content-Type: application/x-www-form-urlencoded" );
-
-        http->post_data_size = http_post_form_urlencoded_get_data( &http->post_data, http );
-
-        if ( http->post_data_size == 0 )
-        {
-          http->post_data_size = my_strlen( http->post_data );
-        }
-
-        break;
-      case HTTP_POST_METHOD_MULTIPART_DATA:
-        strcat( *query, "Content-Type: multipart/form-data" );
-
-
-        break;
-      default:
-        http->error.errorId = HTTP_ERROR_POST_METHOD_UNKNOWN;
-        http->error.line = __LINE__;
-        http->error.file = __FILE__;
-        return;
-    }
-    strcat( *query, HTTP_HEADER_NEWLINE );
-
-    strcat( *query, "Content-Length: " );
-    strcat( *query, my_itoa( http->post_data_size ) );
-    strcat( *query, HTTP_HEADER_NEWLINE );
+    // Do not append additional newline because post data is going to be sent
   }
-  /// End of header
-  strcat( *query, HTTP_HEADER_NEWLINE );
-
-  *size = strlen( *query );
-
-  /** Is request a post? */
-  if ( http->post_method != HTTP_POST_METHOD_NONE )
+  else
   {
-    /** Is there post_data to send? */
-    if ( http->post_data == NULL || http->post_data_size == 0 )
-    {
-      http->error.errorId = HTTP_ERROR_NO_POST_DATA_PRESENT;
-      http->error.line = __LINE__;
-      http->error.file = __FILE__;
-      return;
-    }
-    strncat( *query, http->post_data, http->post_data_size );
-    *size += http->post_data_size;
-
-    switch( http->post_method )
-    {
-      case HTTP_POST_METHOD_PLAIN:
-        // Nothing to be done here
-        break;
-      case HTTP_POST_METHOD_URLENCODED:
-        http_post_form_urlencoded_free( http->post_form_urlencoded_data );
-        break;
-      case HTTP_POST_METHOD_MULTIPART_DATA:
-        // TODO: Free multipart data
-        break;
-      default:
-        http->error.errorId = HTTP_ERROR_POST_METHOD_UNKNOWN;
-        http->error.line = __LINE__;
-        http->error.file = __FILE__;
-        return;
-    }
-    free( http->post_data );
-    http->post_data = NULL;
+    /// End of header
+    strcat( *query, HTTP_HEADER_NEWLINE );
   }
+
   free( http->header->method );
   http->header->method = NULL;
 
@@ -647,10 +575,9 @@ void http_log_write( struct HTTP* http, const char* str, unsigned int mode )
     fclose( fFile );
   }
 }
-void http_query( struct HTTP* http )
+void http_prepare_header_static( struct HTTP* http, char** query )
 {
-  char* query = NULL;
-  int size = 0;
+  *query = NULL;
 
   if ( http->error.errorId != 0 )
   {
@@ -677,12 +604,12 @@ void http_query( struct HTTP* http )
     http_set_opt( http, HTTP_OPTION_CONNETION_CLOSE_AFTER_TRANSMISSION, 0 );
   }
 
-  http_prepare_query( http, &query, &size );
+  http_prepare_header( http, query );
 
-  http_log_write( http, query, 1 );
+  http_log_write( http, *query, 1 );
   http_header_init( &http->header, HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA );
 
-  if ( size == 0 || query == NULL )
+  if ( *query == NULL )
   {
     if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
     {
@@ -694,17 +621,15 @@ void http_query( struct HTTP* http )
 
   if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
   {
-    printf("Sending... %.4s [ %s ]", query, http->header->remote_file );
+    printf("Sending... %.4s [ %s ]", *query, http->header->remote_file );
     fflush( stdout );
   }
 
-  http_raw_send( http, query, size );
   if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
   {
     printf("\n" );
     fflush( stdout );
   }
-  free( query );
 }
 void http_read_response( struct HTTP* http )
 {
@@ -924,6 +849,109 @@ void http_raw_recv( struct HTTP* http, char** sData, int iBytesToRead, int* iByt
   }
   return;
 }
+
+void __http_send_request_data( struct HTTP* http, const char* header_static )
+{
+  char* header_remaining_data;
+  char* content_type = NULL;
+  char* post_data_size_str;
+
+  http_raw_send( http, header_static, strlen( header_static ) );
+
+  if ( http->post_method != HTTP_POST_METHOD_NONE )
+  {
+    header_remaining_data = (char*)malloc( 100 );
+    memset( header_remaining_data, 0, 100 );
+
+    switch( http->post_method )
+    {
+      case HTTP_POST_METHOD_PLAIN:
+        if ( http->post_data_size == 0 )
+        {
+          http->post_data_size = my_strlen( http->post_data );
+        }
+
+        if ( !strncmpi( http->post_data, "<?xml", 5 ) )
+        {
+          content_type = "text/xml;charset=utf-8";
+        }
+        /** Add more magic number types here */
+
+        break;
+      case HTTP_POST_METHOD_URLENCODED:
+        content_type = "application/x-www-form-urlencoded";
+
+        http->post_data_size = http_post_form_urlencoded_get_data( &http->post_data, http );
+
+        if ( http->post_data_size == 0 )
+        {
+          if ( http->post_data != NULL )
+          {
+            http->post_data_size = my_strlen( http->post_data );
+          }
+          else
+          {
+            http->post_data_size = 0;
+            http->post_data = NULL;
+          }
+        }
+
+        break;
+      case HTTP_POST_METHOD_MULTIPART_DATA:
+        content_type = "multipart/form-data";
+
+        break;
+      default:
+        http->error.errorId = HTTP_ERROR_POST_METHOD_UNKNOWN;
+        http->error.line = __LINE__;
+        http->error.file = __FILE__;
+        return;
+    }
+
+    strcat( header_remaining_data, "Content-Type: " );
+    if ( content_type == NULL )
+    {
+      strcat( header_remaining_data, "application/octet-stream" );
+    }
+    else
+    {
+      strcat( header_remaining_data, content_type );
+    }
+    strcat( header_remaining_data, HTTP_HEADER_NEWLINE );
+
+    post_data_size_str = my_itoa( http->post_data_size );
+    strcat( header_remaining_data, "Content-Length: " );
+    strcat( header_remaining_data, post_data_size_str );
+    strcat( header_remaining_data, HTTP_HEADER_NEWLINE );
+    strcat( header_remaining_data, HTTP_HEADER_NEWLINE );
+
+    free( post_data_size_str );
+
+    switch( http->post_method )
+    {
+      case HTTP_POST_METHOD_PLAIN:
+        // Nothing to be done here
+        break;
+      case HTTP_POST_METHOD_URLENCODED:
+        http_post_form_urlencoded_free( http->post_form_urlencoded_data );
+        break;
+      case HTTP_POST_METHOD_MULTIPART_DATA:
+        // TODO: Free multipart data
+        break;
+      default:
+        http->error.errorId = HTTP_ERROR_POST_METHOD_UNKNOWN;
+        http->error.line = __LINE__;
+        http->error.file = __FILE__;
+        return;
+    }
+
+    http_raw_send( http, header_remaining_data, strlen( header_remaining_data ) );
+    http_raw_send( http, http->post_data, http->post_data_size );
+  }
+
+
+}
+
 void http_recv_unknown_size( struct HTTP* http, char** content, int* size )
 {
   struct HTTP_LIST* list;
@@ -1602,6 +1630,8 @@ void http_parse_link( struct HTTP* http )
 }
 void http_get_page( struct HTTP* http, const char* link, char** content, int* size )
 {
+  char* header;
+
   if ( link == NULL || *link == '\0' )
   {
     http->error.errorId = HTTP_ERROR_HOST_MISSING;
@@ -1622,7 +1652,11 @@ void http_get_page( struct HTTP* http, const char* link, char** content, int* si
   http_parse_link( http );
   http_reconnect( http, http->server, http->port );
 
-  http_query( http );
+  // Data is sent here
+  http_prepare_header_static( http, &header );
+  __http_send_request_data( http, header );
+  free( header );
+
   http_read_response( http );
   http_handle_response( http );
 
@@ -1645,7 +1679,11 @@ void http_get_page( struct HTTP* http, const char* link, char** content, int* si
 
     http_reconnect( http, http->server, http->port );
 
-    http_query( http );
+    // Data is sent here
+    http_prepare_header_static( http, &header );
+    __http_send_request_data( http, header );
+    free( header );
+
     http_read_response( http );
     http_handle_response( http );
     http_recv_content( http, content, size );
