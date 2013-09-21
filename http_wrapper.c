@@ -678,13 +678,14 @@ void http_read_response( struct HTTP* http )
   do
   {
     http_header_recv_line( http, &line, &size );
-    http_log_write( http, line, 0 );
     if ( line != NULL )
     {
+      http_log_write( http, line, 0 );
+
       // The magic goes here
       http_header_assign_line( http, line, size );
+      free( line );
     }
-    free( line );
   }
   while ( size != 0 );
 
@@ -1410,6 +1411,7 @@ void http_handle_response( struct HTTP* http )
           case 3: /** 303 See Other */
             free( http->post_data );
             http->post_data = NULL;
+            http->post_data_size = 0;
           case 7: /** 307 Temporary Redirect ( Post -> Post ) */
             http_recv_content( http, NULL, NULL );
 
