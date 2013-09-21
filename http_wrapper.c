@@ -138,13 +138,13 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
   {
     http_alloc( http, HTTP_RESET );
 
-    if ( !http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
-    {
-      sqlite3_open( HTTP_SQLITE_DB, &http->sqlite_handle );
-    }
+    sqlite3_open( HTTP_SQLITE_DB, &http->sqlite_handle );
 
     http_sqlite_db_create( http );
     http_sqlite_db_startup( http );
+
+    // Release postdata by default
+    http_set_opt( http, HTTP_OPTION_POST_DATA_RELEASE, 1 );
 
     http_header_init( &http->header, HTTP_HEADER_INIT );
 
