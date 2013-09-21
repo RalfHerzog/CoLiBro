@@ -525,7 +525,7 @@ void http_prepare_header( struct HTTP* http, char** query )
   while ( http_header_field_iterator_hasNext( &header_field_it ) )
   {
     header_field = http_header_field_iterator_next( &header_field_it );
-    if ( strstr( http->server, header_field->domain ) )
+    if ( !strcmp( http->server, header_field->domain ) )
     {
       switch( header_field->state )
       {
@@ -947,9 +947,17 @@ void __http_send_request_data( struct HTTP* http, const char* header_static )
 
     http_raw_send( http, header_remaining_data, strlen( header_remaining_data ) );
     http_raw_send( http, http->post_data, http->post_data_size );
+
+    free( header_remaining_data );
+
+    http->post_method = HTTP_POST_METHOD_NONE;
+    if ( http_get_opt( http, HTTP_OPTION_POST_DATA_RELEASE ) )
+    {
+      free( http->post_data );
+      http->post_data = NULL;
+      http->post_data_size = 0;
+    }
   }
-
-
 }
 
 void http_recv_unknown_size( struct HTTP* http, char** content, int* size )
@@ -1160,19 +1168,21 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
   if ( http_get_opt( http, HTTP_OPTION_DOWNLOAD_FILES ) )
   {
     http_link_get_info( http, &link, http->header->remote_file );
-    if ( link.file != NULL )
+    if ( link.file == NULL )
     {
-      if ( size != NULL )
-      {
-        *size = http_save_data_to_file( http, link.file );
-      }
-      else
-      {
-        http_save_data_to_file( http, link.file );
-      }
-      return;
+      link.file = new_string( "index.html" );
+    }
+
+    if ( size != NULL )
+    {
+      *size = http_save_data_to_file( http, link.file );
+    }
+    else
+    {
+      http_save_data_to_file( http, link.file );
     }
     http_link_info_free( &link );
+    return;
   }
 
   if ( pContent == NULL )
