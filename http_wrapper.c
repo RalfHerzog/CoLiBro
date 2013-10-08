@@ -560,9 +560,10 @@ void http_prepare_header( struct HTTP* http, char** query )
 
   return;
 }
-void http_log_write( struct HTTP* http, const char* str, unsigned int mode )
+void http_log_write( struct HTTP* http, const char* str, unsigned int line_wraps )
 {
   FILE* fFile;
+  unsigned char i;
 
   if ( !http_get_opt( http, HTTP_OPTION_LOG_ENABLED ) )
   {
@@ -571,7 +572,11 @@ void http_log_write( struct HTTP* http, const char* str, unsigned int mode )
   fFile = fopen( HTTP_LOG_FILE, "a+" );
   if ( fFile != NULL )
   {
-    fprintf( fFile, "%s%s\n", str, mode==1?"\n\n":"" );
+    fprintf( fFile, "%s", str );
+    for ( i = 0 ; i < line_wraps ; i++ )
+    {
+      fprintf( fFile, "\n" );
+    }
     fclose( fFile );
   }
 }
@@ -605,9 +610,6 @@ void http_prepare_header_static( struct HTTP* http, char** query )
   }
 
   http_prepare_header( http, query );
-
-  http_log_write( http, *query, 1 );
-  http_header_init( &http->header, HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA );
 
   if ( *query == NULL )
   {
@@ -660,7 +662,7 @@ void http_read_response( struct HTTP* http )
     free( line );
     http_header_recv_line( http, &line, &size );
   }
-  http_log_write( http, line, 0 );
+  http_log_write( http, line, 1 );
   if ( size == 0 )
   {
     http->error.errorId = HTTP_ERROR_RECV_ERROR;
@@ -680,7 +682,7 @@ void http_read_response( struct HTTP* http )
     http_header_recv_line( http, &line, &size );
     if ( line != NULL )
     {
-      http_log_write( http, line, 0 );
+      http_log_write( http, line, 1 );
 
       // The magic goes here
       http_header_assign_line( http, line, size );
@@ -946,6 +948,17 @@ void __http_send_request_data( struct HTTP* http, const char* header_static )
         return;
     }
 
+    http_log_write( http, header_static, 0 );
+    if ( http_get_opt( http, HTTP_OPTION_LOG_POST_DATA ) )
+    {
+      http_log_write( http, header_remaining_data, 0 );
+      http_log_write( http, http->post_data, 2 );
+    }
+    else
+    {
+      http_log_write( http, header_remaining_data, 1 );
+    }
+
     http_raw_send( http, header_remaining_data, strlen( header_remaining_data ) );
     http_raw_send( http, http->post_data, http->post_data_size );
 
@@ -959,6 +972,12 @@ void __http_send_request_data( struct HTTP* http, const char* header_static )
       http->post_data_size = 0;
     }
   }
+  else
+  {
+    http_log_write( http, header_static, 1 );
+  }
+
+  http_header_init( &http->header, HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA );
 }
 
 void http_recv_unknown_size( struct HTTP* http, char** content, int* size )
@@ -1279,7 +1298,7 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
 
   if ( http_get_opt( http, HTTP_OPTION_LOG_ENABLED ) && http_get_opt( http, HTTP_OPTION_LOG_RESPONSE ) )
   {
-    http_log_write( http, content, 1 );
+    http_log_write( http, content, 2 );
   }
 
   *pContent = content;
