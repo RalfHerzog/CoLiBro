@@ -1178,6 +1178,11 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
     return;
   }
 
+  if ( http->header->content_length == 0 )
+  {
+    return;
+  }
+
   http_set_opt( http, HTTP_OPTION_CONTENT_BINARY, 0 );
   if ( http->header->content_type != NULL && !strstr( http->header->content_type, "text" ) )
   {
