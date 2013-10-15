@@ -1178,7 +1178,7 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
     return;
   }
 
-  if ( http->header->content_length == 0 )
+  if ( http->header->content_length == 0 && strcmpi( http->header->transfer_encoding, "chunked" ) )
   {
     return;
   }
@@ -1242,7 +1242,7 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
   }
 
   if ( http->header->transfer_encoding != NULL &&
-        stristr( http->header->transfer_encoding, "chunked" ) )
+        !strcmpi( http->header->transfer_encoding, "chunked" ) )
   {
     http_recv_chunked( http, &content, &size_tmp );
     http_header_recv_line( http, NULL, NULL );
@@ -1278,21 +1278,14 @@ void http_recv_content( struct HTTP* http, char** pContent, int* size )
       http_recv_unknown_size( http, &content, &size_tmp );
     }
   }
-  /** If content is encoded and a source or text, decode it */
-  if (  http_get_opt( http, HTTP_OPTION_CONTENT_BINARY ) == HTTP_BOOL_FALSE )
+
+  /** If content is encoded, decode it */
+  if ( http->header->content_encoding != NULL )
   {
-    if ( http->header->content_encoding != NULL )
+    if ( inflateData( &content_tmp, &size_out, (unsigned char*)content, size_tmp ) == HTTP_BOOL_TRUE )
     {
-      if ( inflateData( &content_tmp, &size_out, (unsigned char*)content, size_tmp ) == HTTP_BOOL_TRUE )
-      {
-        free( content );
-        content = (char*)content_tmp;
-      }
-      http_set_opt( http, HTTP_OPTION_CONTENT_BINARY, 1 );
-    }
-    else
-    {
-      http_set_opt( http, HTTP_OPTION_CONTENT_BINARY, 0 );
+      free( content );
+      content = (char*)content_tmp;
     }
   }
 
