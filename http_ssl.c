@@ -31,8 +31,7 @@ void http_ssl_connect( struct HTTP* http )
   ssl_set_dbg( &http->ssl.ssl, NULL, stdout );
   ssl_set_bio( &http->ssl.ssl, net_recv, &http->socket, net_send, &http->socket );
 
-  ssl_set_ciphersuites( &http->ssl.ssl, ssl_default_ciphersuites );
-  ssl_set_session( &http->ssl.ssl, 1, 600, &http->ssl.ssl_sess );
+  ssl_set_session( &http->ssl.ssl, &http->ssl.ssl_sess );
 }
 int http_ssl_recv( struct HTTP* http, void *__buf, size_t __n )
 {
