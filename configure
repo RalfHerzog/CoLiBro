@@ -19,6 +19,9 @@ function compare_versions() {
 	}'
 }
 
+COLIBRO_LIB_DIR=library
+COLIBRO_INC_DIR=include
+
 libs_required=("sqlite3" "zlib" "polarssl" "math")
 # -1 = system
 libs_version=("3.7.9" "1.2.3.4" "1.3.1" "-1")
@@ -141,26 +144,38 @@ do
 done
 printf "\n"
 
-printf "Configuration done. Write make file ... "
+printf "Generate makefiles ... \n"
+
+# ----- Colibro makefile -----
+printf "Generate $COLIBRO_LIB_DIR/Makefile ... \n"
 printf "
 CC=gcc
 GCC=\$(CC)
 CFLAGS=-c -Wall
 
-INCLUDES=include
+INCLUDES=-I../include -I../polarssl/include
 SRC=*.c
 OBJ=*.o
 
-all:" > Makefile
-
-printf "
-	\$(GCC) \$(CFLAGS) \$(SRC)
+all:
+	\$(GCC) \$(CFLAGS) \$(SRC) \$(INCLUDES)
 	ar cr libcolibro.a \$(OBJ)
 clean:
-	rm *.o -f
-" >> Makefile
+	rm *.o -f" > $COLIBRO_LIB_DIR/Makefile
 
-printf "done\n"
+# ----- Main makefile -----
+printf "Generate Makefile ... \n"
+printf "all:\n" > Makefile
+
+# Call extra libs make's
+for extra_lib in ${libs_make[*]}
+do
+  printf "\tcd $extra_lib && if [ -f configure ]; then ./configure; fi && make\n" >> Makefile
+done
+# Call colibro makefile
+printf "\tcd $COLIBRO_LIB_DIR && make\n" >> Makefile
+printf "\tcp $COLIBRO_LIB_DIR/libcolibro.a .\n" >> Makefile
+
 printf "\nRun 'make' now\n"
 
 exit
