@@ -1,56 +1,164 @@
 #!/bin/bash
 
-array=(sqlite3 zlib polarssl math)
-libpath="/usr/include/"
-libpath_end=".h"
-for x in ${array[*]}
+# http://blog.faustocarrera.com.ar/post/60750937265/bash-compare-software-versions
+function compare_versions() {
+  # compare_versions min_version current_version
+	ver_a=$1
+	ver_b=$2
+	versions="$ver_a $ver_b"
+	echo $versions | awk '{ 
+		# convert to arrays
+		split($1, aArr, ".")
+		split($2, bArr, ".")
+		# Translate in decimal
+		aDec = aArr[1] * 10^12 + aArr[2] * 10^8 + aArr[3] * 1^4 + aArr[4]
+		bDec = bArr[1] * 10^12 + bArr[2] * 10^8 + bArr[3] * 1^4 + bArr[4]
+		# compare versions
+		if (bDec >= aDec) { print "1" }
+		if (bDec < aDec) { print "0" }
+	}'
+}
+
+libs_required=("sqlite3" "zlib" "polarssl" "math")
+# -1 = system
+libs_version=("3.7.9" "1.2.3.4" "1.3.1" "-1")
+libs_count=${#libs_required[*]}
+
+lib_dir="/usr/include"
+
+libs_make=()
+
+index=0
+while [ $index -lt $libs_count ]
 do
-  printf "Checking for %s installed ... " $x
-
-  lib_array=$(echo `whereis $x` | tr " " "\n")
+  library=${libs_required[$index]}
   present=0
-
-  for package in ${lib_array[*]}
-  do
-    if [ "$package" == $libpath$x$libpath_end ]
-    then
-      present=1
-    fi
-  done
-
-  for package in ${lib_array[*]}
-  do
-    if [ "$package" == $libpath$x ]
-    then
-      present=1
-    fi
-  done
-
+  local_lib=0
+  
+  printf "Check if '%s' is present ... " $library
+  
+  # Check local library
+  if [ -d $library ]
+  then
+    present=1
+    local_lib=1
+  fi
+  
+  # Check system library if not local
   if [ $present -eq 0 ]
   then
-    printf "no\n"
-    printf "\nPlease install '%s' library developer files\n" $x
-    exit
-  else
-    printf "ok\n"
+    lib_array=$(echo `whereis $library` | tr " " "\n" )
+    
+    # Check library folder
+    if [ -d $lib_dir/$library ]
+    then
+      present=1
+    else
+      # Check library header file
+      
+      for package in ${lib_array[*]}
+      do
+        if [ "$package" == "$lib_dir/$library.h" ]
+        then
+          present=1
+        fi
+      done
+    fi
   fi
+  
+  # Get the min lib version
+  lib_version_min=${libs_version[$index]}
+  
+  # Lib found?
+  if [ $present -eq 0 ]
+  then
+    printf "no\n\n"
+    
+    printf "Please install '%s' library developer files on your system or run './download-missing.sh'\n" $library
+    printf "\n\n"
+    exit
+    
+  else
+    printf "yes"
+    if [ $local_lib -eq 1 ]
+    then
+      printf ", ./%s/" $library
+    fi
+  fi
+  
+  # Need to check version, only if nessesary
+  if [[ $lib_version_min != "-1" && $local_lib -eq 0 ]]
+  then
+    printf "\n"
+    printf "Check version of '%s' ... " $library
+    
+    version_installed=`pkg-config --silence-errors --modversion $library`
+    if [ -z $version_installed ]
+    then
+      # Search in dpkg database
+      versions_installed=`dpkg-query -W "*$library*-dev*" | awk '{ print $2 }'`
+      
+      for version in ${versions_installed[*]}
+      do
+        version_installed=$version
+        
+        version_result=$(compare_versions $lib_version_min $version)
+        if [ $version_result -eq "1" ]
+        then
+          # Found compatible lib version
+          break
+        fi
+      done
+    else
+      version_result=$(compare_versions $lib_version_min $version_installed)
+    fi
+    
+    if [ $version_result == "1" ]
+    then
+      printf "%s >= %s" $version_installed $lib_version_min
+    else
+      printf "error >= %s needed, %s installed\n" $lib_version_min $version_installed
+      printf "\nTry to run './download-missing.sh', this may fix the problem\n\n"
+      exit
+    fi
+  fi
+  
+  if [ $local_lib -eq 1 ]
+  then
+    # Add $library to libs_make array
+    libs_make[$[${#libs_make[@]}+1]]=$library
+    printf " with make"
+  fi
+  printf "\n"
+  
+  ((index++))
 done
 
-printf "\nConfiguration done. Writing make file ... "
+printf "\nLibraries added to 'make' process:\n"
+for x in ${libs_make[*]}
+do
+  printf "%s\n" $x
+done
+printf "\n"
 
-printf "CC=gcc
+printf "Configuration done. Write make file ... "
+printf "
+CC=gcc
 GCC=\$(CC)
 CFLAGS=-c -Wall
 
+INCLUDES=include
 SRC=*.c
 OBJ=*.o
 
-all: 
+all:" > Makefile
+
+printf "
 	\$(GCC) \$(CFLAGS) \$(SRC)
 	ar cr libcolibro.a \$(OBJ)
 clean:
 	rm *.o -f
-" > Makefile
+" >> Makefile
 
 printf "done\n"
 printf "\nRun 'make' now\n"
