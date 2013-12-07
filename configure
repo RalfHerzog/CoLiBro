@@ -21,6 +21,7 @@ function compare_versions() {
 
 COLIBRO_LIB_DIR=library
 COLIBRO_INC_DIR=include
+EXTERN_LIBS_DIR=./extra-libs
 
 libs_required=("sqlite3" "zlib" "polarssl" "math")
 # -1 = system
@@ -144,8 +145,6 @@ do
 done
 printf "\n"
 
-printf "Generate makefiles ... \n"
-
 # ----- Colibro makefile -----
 printf "Generate $COLIBRO_LIB_DIR/Makefile ... \n"
 printf "
@@ -153,7 +152,15 @@ CC=gcc
 GCC=\$(CC)
 CFLAGS=-c -Wall
 
-INCLUDES=-I../include -I../polarssl/include
+INCLUDES=-I../include" > $COLIBRO_LIB_DIR/Makefile
+
+# Add extern libs include path
+for extern_lib in ${libs_make[*]}
+do
+  printf " -I../${extern_lib}/include" >> $COLIBRO_LIB_DIR/Makefile
+done 
+
+printf "
 SRC=*.c
 OBJ=*.o
 
@@ -161,20 +168,31 @@ all:
 	\$(GCC) \$(CFLAGS) \$(SRC) \$(INCLUDES)
 	ar cr libcolibro.a \$(OBJ)
 clean:
-	rm *.o -f" > $COLIBRO_LIB_DIR/Makefile
+	rm *.o -f" >> $COLIBRO_LIB_DIR/Makefile
 
 # ----- Main makefile -----
 printf "Generate Makefile ... \n"
 printf "all:\n" > Makefile
 
-# Call extra libs make's
-for extra_lib in ${libs_make[*]}
+# Call extern libs make's
+for extern_lib in ${libs_make[*]}
 do
-  printf "\tcd $extra_lib && if [ -f configure ]; then ./configure; fi && make\n" >> Makefile
+  printf "\tcd $extern_lib && if [ -f configure ]; then ./configure; fi && make\n" >> Makefile
 done
 # Call colibro makefile
-printf "\tcd $COLIBRO_LIB_DIR && make\n" >> Makefile
-printf "\tcp $COLIBRO_LIB_DIR/libcolibro.a .\n" >> Makefile
+printf "
+\tcd $COLIBRO_LIB_DIR && make
+\tcp $COLIBRO_LIB_DIR/libcolibro.a .
+clean:
+\tcd $COLIBRO_LIB_DIR && make clean
+\tif [ -f libcolibro.a ]; then rm libcolibro.a; fi
+" >> Makefile
+
+# Clean code for extern libs
+for extern_lib in ${libs_make[*]}
+do
+  printf "\tcd $extern_lib && make clean\n" >> Makefile
+done
 
 printf "\nRun 'make' now\n"
 
