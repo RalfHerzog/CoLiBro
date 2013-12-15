@@ -1,0 +1,5 @@
+*.o
+*.a
+extra-libs/
+polarssl
+Makefile
