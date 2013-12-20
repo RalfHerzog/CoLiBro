@@ -1,5 +1,4 @@
 *.o
 *.a
-extra-libs/
-polarssl
+extern/
 Makefile

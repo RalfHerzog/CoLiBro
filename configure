@@ -6,7 +6,7 @@ function compare_versions() {
 	ver_a=$1
 	ver_b=$2
 	versions="$ver_a $ver_b"
-	echo $versions | awk '{ 
+	echo $versions | awk '{
 		# convert to arrays
 		split($1, aArr, ".")
 		split($2, bArr, ".")
@@ -19,13 +19,13 @@ function compare_versions() {
 	}'
 }
 
-COLIBRO_LIB_DIR=library
+COLIBRO_LIB_DIR=lib
 COLIBRO_INC_DIR=include
-EXTERN_LIBS_DIR=./extra-libs
+EXTERN_LIBS_DIR=extern
 
-libs_required=("sqlite3" "zlib" "polarssl" "math")
+libs_required=("sqlite3" "zlib" "polarssl" "firedns" "math")
 # -1 = system
-libs_version=("3.7.9" "1.2.3.4" "1.3.1" "-1")
+libs_version=("3.7.9" "1.2.3.4" "1.3.1" "1.0" "-1")
 libs_count=${#libs_required[*]}
 
 lib_dir="/usr/include"
@@ -38,16 +38,16 @@ do
   library=${libs_required[$index]}
   present=0
   local_lib=0
-  
+
   printf "Check if '%s' is present ... " $library
-  
+
   # Check local library
-  if [ -d $library ]
+  if [ -d $EXTERN_LIBS_DIR/$library ]
   then
     present=1
     local_lib=1
   fi
-  
+
   # Check system library if not local
   if [ $present -eq 0 ]
   then
@@ -86,7 +86,7 @@ do
     printf "yes"
     if [ $local_lib -eq 1 ]
     then
-      printf ", ./%s/" $library
+      printf ", %s/%s/" $EXTERN_LIBS_DIR $library
     fi
   fi
   
@@ -146,53 +146,90 @@ done
 printf "\n"
 
 # ----- Colibro makefile -----
-printf "Generate $COLIBRO_LIB_DIR/Makefile ... \n"
+printf "Generate Makefile ... "
 printf "
-CC=gcc
-GCC=\$(CC)
-CFLAGS=-c -Wall
 
-INCLUDES=-I../include" > $COLIBRO_LIB_DIR/Makefile
+#
+# Makefile for libcolibro (stolen from firedns) (requires GNU make)
+#
 
-# Add extern libs include path
-for extern_lib in ${libs_make[*]}
-do
-  printf " -I../${extern_lib}/include" >> $COLIBRO_LIB_DIR/Makefile
-done 
+prefix = /usr/local
+exec_prefix = \$(prefix)
 
-printf "
-SRC=*.c
-OBJ=*.o
+bindir = \$(exec_prefix)/bin
+libdir = \$(prefix)/lib
+includedir = \$(prefix)/include
+externlibsdir = extern
 
-all:
-	\$(GCC) \$(CFLAGS) \$(SRC) \$(INCLUDES)
-	ar cr libcolibro.a \$(OBJ)
-clean:
-	rm *.o -f" >> $COLIBRO_LIB_DIR/Makefile
+SRCS := \$(wildcard src/*.c)
+OBJS := \$(SRCS:.c=.o)
+LOBJS := \$(OBJS:.o=.lo)
+EXSRCS := \$(wildcard examples/*.c)
+EXOBJS := \$(EXSRCS:.c=.o)
+EXBINS := \$(EXSRCS:.c=)
 
-# ----- Main makefile -----
-printf "Generate Makefile ... \n"
-printf "all:\n" > Makefile
+EXTERN_LIBS_INC := \$(addprefix -I, \$(wildcard \$(externlibsdir)/*/include))
+# EXTRALIBS := ./extra-libs/polarssl/include
 
-# Call extern libs make's
-for extern_lib in ${libs_make[*]}
-do
-  printf "\tcd $extern_lib && if [ -f configure ]; then ./configure; fi && make\n" >> Makefile
-done
-# Call colibro makefile
-printf "
-\tcd $COLIBRO_LIB_DIR && make
-\tcp $COLIBRO_LIB_DIR/libcolibro.a .
-clean:
-\tcd $COLIBRO_LIB_DIR && make clean
-\tif [ -f libcolibro.a ]; then rm libcolibro.a; fi
-" >> Makefile
+CFLAGS  = -Os -std=c99 -D_GNU_SOURCE
 
-# Clean code for extern libs
-for extern_lib in ${libs_make[*]}
-do
-  printf "\tcd $extern_lib && make clean\n" >> Makefile
-done
+# Add more extra-libs here
+INC     = -I./include \$(EXTERN_LIBS_INC)
+AR      = \$(CROSS_COMPILE)ar
+RANLIB  = \$(CROSS_COMPILE)ranlib
+OBJCOPY = \$(CROSS_COMPILE)objcopy
+
+ALL_INCLUDES := \$(sort \$(wildcard include/*.h include/*/*.h))
+
+MY_LIBS = lib/libcolibro.a
+ALL_LIBS = \$(MY_LIBS)
+
+EXTERN_LIBS_MAKE := \$(addsuffix /_make, \$(wildcard \$(externlibsdir)/*))
+EXTERN_LIBS_CLEAN := \$(addsuffix /_clean, \$(wildcard \$(externlibsdir)/*))
+
+all: \$(ALL_LIBS) \$(EXTERN_LIBS_MAKE)
+	@echo \"----------------------------------\"
+	@echo \"Link your application with:\"
+	@echo \"      '-lcolibro -lsqlite3 -lz -lpolarssl -lm'\"
+	@echo \"----------------------------------\"
+
+examples: \$(EXBINS)
+
+install: \$(ALL_LIBS:lib/%%=\$(DESTDIR)\$(libdir)/%%) \$(ALL_INCLUDES:include/%%=\$(DESTDIR)\$(includedir)/%%) \$(ALL_TOOLS:tools/%%=\$(DESTDIR)\$(bindir)/%%)
+
+clean: \$(EXTERN_LIBS_CLEAN)
+	rm -f \$(OBJS)
+	rm -f \$(LOBJS)
+	rm -f \$(EXOBJS)
+	rm -f \$(EXBINS)
+	rm -f \$(ALL_LIBS) lib/*.[ao] lib/*.so
+
+extern/%%/_make:
+	cd \$(dir \$@) && make
+
+extern/%%/_clean:
+	cd \$(dir \$@) && make clean
+
+%%.out: %%.o \$(ALL_LIBS)
+	\$(CC) -o \$@ \$< -l:lib/libcolibro.a \$(LDFLAGS)
+
+%%.o: %%.c
+	\$(CC) \$(CFLAGS) \$(INC) -c -o \$@ \$<
+
+lib/libcolibro.a: \$(OBJS)
+	rm -f \$@
+	\$(AR) cr \$@ \$(OBJS)
+	\$(RANLIB) \$@
+
+\$(DESTDIR)\$(bindir)/%%: tools/%%
+	install -D \$< \$@
+
+\$(DESTDIR)\$(prefix)/%%: %%
+	install -D -m 644 \$< \$@
+
+.PHONY: all clean install examples
+"  > Makefile
+printf "done\n"
 
 printf "\nRun 'make' now\n"
 
