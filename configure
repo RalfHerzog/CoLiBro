@@ -160,6 +160,7 @@ bindir = \$(exec_prefix)/bin
 libdir = \$(prefix)/lib
 includedir = \$(prefix)/include
 externlibsdir = extern
+local_lib = lib
 
 SRCS := \$(wildcard src/*.c)
 OBJS := \$(SRCS:.c=.o)
@@ -181,7 +182,7 @@ OBJCOPY = \$(CROSS_COMPILE)objcopy
 
 ALL_INCLUDES := \$(sort \$(wildcard include/*.h include/*/*.h))
 
-MY_LIBS = lib/libcolibro.a
+MY_LIBS = \$(local_lib)/libcolibro.a
 ALL_LIBS = \$(MY_LIBS)
 
 EXTERN_LIBS_MAKE := \$(addsuffix /_make, \$(wildcard \$(externlibsdir)/*))
@@ -198,11 +199,12 @@ examples: \$(EXBINS)
 install: \$(ALL_LIBS:lib/%%=\$(DESTDIR)\$(libdir)/%%) \$(ALL_INCLUDES:include/%%=\$(DESTDIR)\$(includedir)/%%) \$(ALL_TOOLS:tools/%%=\$(DESTDIR)\$(bindir)/%%)
 
 clean: \$(EXTERN_LIBS_CLEAN)
+	rm -rf \$(local_lib)/
 	rm -f \$(OBJS)
 	rm -f \$(LOBJS)
 	rm -f \$(EXOBJS)
 	rm -f \$(EXBINS)
-	rm -f \$(ALL_LIBS) lib/*.[ao] lib/*.so
+	rm -f \$(ALL_LIBS) \$(local_lib)/*.[ao] \$(local_lib)/*.so
 
 extern/%%/_make:
 	cd \$(dir \$@) && make
@@ -211,13 +213,14 @@ extern/%%/_clean:
 	cd \$(dir \$@) && make clean
 
 %%.out: %%.o \$(ALL_LIBS)
-	\$(CC) -o \$@ \$< -l:lib/libcolibro.a \$(LDFLAGS)
+	\$(CC) -o \$@ \$< -l:\$(local_lib)/libcolibro.a \$(LDFLAGS)
 
 %%.o: %%.c
 	\$(CC) \$(CFLAGS) \$(INC) -c -o \$@ \$<
 
-lib/libcolibro.a: \$(OBJS)
+\$(local_lib)/libcolibro.a: \$(OBJS)
 	rm -f \$@
+	mkdir \$(local_lib)
 	\$(AR) cr \$@ \$(OBJS)
 	\$(RANLIB) \$@
 
