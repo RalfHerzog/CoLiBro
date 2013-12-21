@@ -2,25 +2,36 @@
 
 void http_ssl_connect( struct HTTP* http )
 {
-  int lastResult;
-
   /** SSL init */
   entropy_init( &http->ssl.entropy );
-  lastResult = ctr_drbg_init( &http->ssl.ctr_drbg, entropy_func, &http->ssl.entropy, (unsigned char*)"HTTP_SSL", 8 );
-  if ( lastResult != 0 )
+  http->last_result = ctr_drbg_init( &http->ssl.ctr_drbg, entropy_func, &http->ssl.entropy, (unsigned char*)"HTTP_SSL", 8 );
+  if ( http->last_result != 0 )
   {
     /** Entropy init failed */
+    http->error.errorId = HTTP_ERROR_SSL_ENTROPY_INIT_FAILED;
+    http->error.line = __LINE__;
+    http->error.file = __FILE__;
+    return;
   }
 
   memset( &http->ssl.ssl_sess, 0, sizeof( ssl_session ) );
   memset( &http->ssl.ssl, 0, sizeof( ssl_context ) );
 
-  http->last_result = net_connect( &http->socket, http->server, http->port );
+  http_raw_connect( http );
+  if ( http->last_result != 0 )
+  {
+    /** Connect failed */
+    return;
+  }
 
-  lastResult = ssl_init( &http->ssl.ssl );
-  if ( lastResult != 0 )
+  http->last_result = ssl_init( &http->ssl.ssl );
+  if ( http->last_result != 0 )
   {
     /** SSL init failed */
+    http->error.errorId = HTTP_ERROR_SSL_INIT_FAILED;
+    http->error.line = __LINE__;
+    http->error.file = __FILE__;
+    return;
   }
   ssl_set_endpoint( &http->ssl.ssl, SSL_IS_CLIENT );
   ssl_set_authmode( &http->ssl.ssl, HTTP_SSL_VERIFY_MODE );

@@ -26,6 +26,7 @@
 #include "http_sqlite.h"
 #include "http_post.h"
 #include "getch.h"
+#include "firedns.h"
 
 #define HTTP_PORT 80
 #define HTTP_HEADER_NEWLINE "\r\n\0"
@@ -96,7 +97,9 @@ enum HTTP_ERROR_STATUS {
   HTTP_ERROR_NOT_IMPLEMENTED_YET,
   HTTP_ERROR_UNEXPECTED_RESPONSE,
   HTTP_ERROR_DOWNLOAD_FILE_TOO_BIG,
-  HTTP_ERROR_POST_METHOD_UNKNOWN
+  HTTP_ERROR_POST_METHOD_UNKNOWN,
+  HTTP_ERROR_SSL_INIT_FAILED,
+  HTTP_ERROR_SSL_ENTROPY_INIT_FAILED
 };
 
 struct HTTP_LIST{
@@ -123,9 +126,10 @@ struct HTTP{
   char* post_data;
   unsigned int post_data_size;
 
-  struct HTTP_ERROR error;
-  struct hostent* hostent;
+  struct in_addr* dns_result;
   struct sockaddr_in addr;
+
+  struct HTTP_ERROR error;
   struct HTTP_HEADER* header;
   struct HTTP_SSL_Connection ssl;
 
@@ -141,6 +145,8 @@ struct HTTP{
 
   sqlite3*      sqlite_handle;
   sqlite3_stmt* stmt;
+
+  firedns_state firedns;
 
   /** Function pointer */
   void (*connect_func)(struct HTTP*);

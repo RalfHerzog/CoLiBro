@@ -13,15 +13,15 @@ int http_save_data_to_file( struct HTTP* http, const char* file );
 
 void http_print_errorcode(  struct HTTP* http )
 {
-  int size;
+  int length;
   char* text;
 
   if ( http->error.errorId == 0 )
   {
     return;
   }
-  size = 200;
-  text = (char*)malloc( size );
+  length = 200;
+  text = (char*)malloc( length );
 
   if ( http->header->status.responseId != 0 )
   {
@@ -31,60 +31,64 @@ void http_print_errorcode(  struct HTTP* http )
   switch( http->error.errorId )
   {
     case HTTP_ERROR_SOCKET_ERROR:
-      snprintf( text, size, "SOCKET_ERROR: Socket not valid or closed unexpectly" );
+      snprintf( text, length, "SOCKET_ERROR: Socket not valid or closed unexpectly" );
       break;
     case HTTP_ERROR_HOST_MISSING:
-      snprintf( text, size, "HOST_MISSING: Cannot connect to an empty host entry" );
+      snprintf( text, length, "HOST_MISSING: Cannot connect to an empty host entry" );
       break;
     case HTTP_ERROR_HOST_LOOKUP_FAILURE:
-      snprintf( text, size, "HOST_LOOKUP_FAILURE: The given host %s cannot be resolved", http->server );
+      snprintf( text, length, "HOST_LOOKUP_FAILURE: The given host %s cannot be resolved", http->server );
       break;
     case HTTP_ERROR_CONNECT_FAILED:
-      snprintf( text, size, "CONNECT_FAILED: Connection to %s has failed or timed out", http->server );
+      snprintf( text, length, "CONNECT_FAILED: Connection to %s has failed or timed out", http->server );
       break;
     case HTTP_ERROR_RAW_SEND_ERROR:
-      snprintf( text, size, "RAW_SEND_ERROR: Data could not been sent because socket was invalid" );
+      snprintf( text, length, "RAW_SEND_ERROR: Data could not been sent because socket was invalid" );
       break;
     case HTTP_ERROR_RAW_RECV_ERROR:
-      snprintf( text, size, "RAW_RECV_ERROR: Data could not been received because socket was invalid" );
+      snprintf( text, length, "RAW_RECV_ERROR: Data could not been received because socket was invalid" );
       break;
     case HTTP_ERROR_RECV_ERROR:
-      snprintf( text, size, "RECV_ERROR: Not all data could be received" );
+      snprintf( text, length, "RECV_ERROR: Not all data could be received" );
       break;
     case HTTP_ERROR_EXPECT_LINEFEED:
-      snprintf( text, size, "EXPECT_LINEFEED: Header was not in the right format" );
+      snprintf( text, length, "EXPECT_LINEFEED: Header was not in the right format" );
       break;
     case HTTP_ERROR_CONTENT_SIZE_UNKNOWN:
-      snprintf( text, size, "CONTENT_SIZE_UNKNOWN: I don't know how much I should receive" );
+      snprintf( text, length, "CONTENT_SIZE_UNKNOWN: I don't know how much I should receive" );
       break;
     case HTTP_ERROR_CONNECTION_CLOSED:
-      snprintf( text, size, "CONNECTION_CLOSED: Connection was closed unexpectly" );
+      snprintf( text, length, "CONNECTION_CLOSED: Connection was closed unexpectly" );
       break;
     case HTTP_ERROR_ONLY_HTTP_SUPPORTED:
-      snprintf( text, size, "ONLY_HTTP/HTTPS_SUPPORTED: In this version only HTTP(S) is supported" );
+      snprintf( text, length, "ONLY_HTTP/HTTPS_SUPPORTED: In this version only HTTP(S) is supported" );
       break;
     case HTTP_ERROR_NO_STATUS_CODE_RECIEVED:
-      snprintf( text, size, "NO_STATUS_CODE_RECIEVED: Server does not send the header in right format" );
+      snprintf( text, length, "NO_STATUS_CODE_RECIEVED: Server does not send the header in right format" );
       break;
     case HTTP_ERROR_NO_POST_DATA_PRESENT:
-      snprintf( text, size, "NO_POST_DATA_PRESENT: You have to try sending post data. But there is not any data" );
+      snprintf( text, length, "NO_POST_DATA_PRESENT: You have to try sending post data. But there is not any data" );
       break;
     case HTTP_ERROR_NOT_IMPLEMENTED_YET:
-      snprintf( text, size, "NOT_IMPLEMENTED_YET: The function the server requests or client has to apply, is not implemented" );
+      snprintf( text, length, "NOT_IMPLEMENTED_YET: The function the server requests or client has to apply, is not implemented" );
       break;
     case HTTP_ERROR_UNEXPECTED_RESPONSE:
-      snprintf( text, size, "UNEXPECTED_RESPONSE: I expect another response from the server" );
+      snprintf( text, length, "UNEXPECTED_RESPONSE: I expect another response from the server" );
       break;
     case HTTP_ERROR_DOWNLOAD_SAVE_FILE:
-      snprintf( text, size, "DOWNLOAD_SAVE_FILE: Cannot save the requested file to disk. Check write permissions" );
+      snprintf( text, length, "DOWNLOAD_SAVE_FILE: Cannot save the requested file to disk. Check write permissions" );
       break;
     case HTTP_ERROR_DOWNLOAD_FILE_TOO_BIG:
-      snprintf( text, size, "DOWNLOAD_FILE_TOO_BIG: The response of the query is too big to fit in memory" );
+      snprintf( text, length, "DOWNLOAD_FILE_TOO_BIG: The response of the query is too big to fit in memory" );
       break;
     case HTTP_ERROR_POST_METHOD_UNKNOWN:
-      snprintf( text, size, "HTTP_ERROR_POST_METHOD_UNKNOWN: Unknown post method detected" );
+      snprintf( text, length, "HTTP_ERROR_POST_METHOD_UNKNOWN: Unknown post method detected" );
+    case HTTP_ERROR_SSL_INIT_FAILED:
+      snprintf( text, length, "HTTP_ERROR_SSL_INIT_FAILED: Initialization of (polarssl's) ssl-socket failed" );
+    case HTTP_ERROR_SSL_ENTROPY_INIT_FAILED:
+      snprintf( text, length, "HTTP_ERROR_SSL_ENTROPY_INIT_FAILED: Initialization of (polarssl's) ssl entropy failed" );
     default:
-      snprintf( text, size, "ERROR: %i %s", http->header->status.responseId, http->header->status.responseText );
+      snprintf( text, length, "ERROR: %i %s", http->header->status.responseId, http->header->status.responseText );
       break;
   }
   if ( http->header->status.responseId == 0 )
@@ -137,6 +141,9 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
   if ( reset & HTTP_INIT )
   {
     http_alloc( http, HTTP_RESET );
+
+    firedns_init( &http->firedns );
+    firedns_add_server( &http->firedns, "8.8.8.8" );
 
     sqlite3_open( HTTP_SQLITE_DB, &http->sqlite_handle );
 
@@ -225,9 +232,8 @@ void http_free( struct HTTP* http )
 
 void http_raw_connect( struct HTTP* http )
 {
-  #warning "TODO gethostbyname_r => TODO getaddrinfo"
-  http->hostent = gethostbyname( http->server );
-  if ( http->hostent == NULL )
+  http->dns_result = firedns_resolveip4( &http->firedns, http->server );
+  if ( http->dns_result == NULL )
   {
     http->error.errorId = HTTP_ERROR_HOST_LOOKUP_FAILURE;
     http->error.line = __LINE__;
@@ -235,15 +241,26 @@ void http_raw_connect( struct HTTP* http )
     return;
   }
 
-  memset( &http->addr, 0, sizeof(http->addr) );
+  memset( &http->addr, 0, sizeof( http->addr ) );
 
   http->addr.sin_family = AF_INET;
-  memcpy( &http->addr.sin_addr.s_addr, http->hostent->h_addr, http->hostent->h_length );
+  memcpy( &http->addr.sin_addr.s_addr, &http->dns_result->s_addr, sizeof( http->dns_result->s_addr ) );
   http->addr.sin_port = htons( http->port );
 
-  http->last_result = connect( http->socket , (struct sockaddr*)&http->addr, sizeof(http->addr) );
-
+  http->last_result = connect( http->socket, (struct sockaddr*)&http->addr, sizeof( http->addr ) );
+  if ( http->last_result == -1 )
+  {
+    http->error.errorId = HTTP_ERROR_CONNECT_FAILED;
+    http->error.line = __LINE__;
+    http->error.file = __FILE__;
+  }
+  if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
+  {
+    printf("%s\n", http->last_result != -1 ? " success" : " failed" );
+    fflush( stdout );
+  }
 }
+
 void http_connect( struct HTTP* http, const char* host, const unsigned short port )
 {
   if ( http->error.errorId != 0 )
@@ -280,18 +297,6 @@ void http_connect( struct HTTP* http, const char* host, const unsigned short por
   }
 
   http->connect_func( http );
-
-  if ( http->last_result == -1 )
-  {
-    http->error.errorId = HTTP_ERROR_CONNECT_FAILED;
-    http->error.line = __LINE__;
-    http->error.file = __FILE__;
-  }
-  if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
-  {
-    printf("%s\n", http->last_result != -1 ? "success" : "failed" );
-    fflush( stdout );
-  }
   return;
 }
 HTTP_BOOL http_get_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option )
@@ -1816,7 +1821,7 @@ void http_write_memory_dump( struct HTTP* http, FILE* fFile )
   fprintf( fFile, "port: %i\n", http->port );
   fprintf( fFile, "server: %s\n", http->server );
   fprintf( fFile, "download_folder: %s\n", http->download_folder );
-  fprintf( fFile, "hostent address: %p\n", http->hostent );
+  fprintf( fFile, "firedns address: %p\n", &http->firedns );
   fprintf( fFile, "addr: %p\n", &http->addr );
 
   fprintf( fFile, "\n-------HTTP-Header-Section-------\n" );
