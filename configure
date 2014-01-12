@@ -189,9 +189,11 @@ EXTERN_LIBS_MAKE := \$(addsuffix /_make, \$(wildcard \$(externlibsdir)/*))
 EXTERN_LIBS_CLEAN := \$(addsuffix /_clean, \$(wildcard \$(externlibsdir)/*))
 
 all: \$(ALL_LIBS) \$(EXTERN_LIBS_MAKE)
+	@echo \"Build complete\"
+	@echo \"\"
 	@echo \"----------------------------------\"
 	@echo \"Link your application with:\"
-	@echo \"      '-lcolibro -lsqlite3 -lz -lpolarssl -lm'\"
+	@echo \"      '-lcolibro -lfiredns -lsqlite3 -lz -lpolarssl -lm'\"
 	@echo \"----------------------------------\"
 
 examples: \$(EXBINS)
@@ -220,7 +222,7 @@ extern/%%/_clean:
 
 \$(local_lib)/libcolibro.a: \$(OBJS)
 	rm -f \$@
-	mkdir \$(local_lib)
+	mkdir -p \$(local_lib)
 	\$(AR) cr \$@ \$(OBJS)
 	\$(RANLIB) \$@
 
