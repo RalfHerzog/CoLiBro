@@ -57,7 +57,6 @@ void http_ssl_close( struct HTTP* http )
 	net_close( http->socket );
 
 	ssl_free( &http->ssl.ssl );
-	ssl_session_free( &http->ssl.ssl_session );
 
 	memset( &http->ssl.ctr_drbg, 0, sizeof( ctr_drbg_context ) );
 	memset( &http->ssl.entropy, 0, sizeof( entropy_context ) );

@@ -47,13 +47,19 @@ void http_sqlite_db_startup( struct HTTP* http )
 int http_sqlite_num_rows( struct HTTP* http, const char* query )
 {
 	int count = 0;
+	int sqlite3_result = SQLITE_OK;
 
 	if ( http_get_opt( http, HTTP_OPTION_SQLITE_DB_DISABLED ) )
 	{
 		return 0;
 	}
 
-	sqlite3_prepare( http->sqlite_handle, query, -1, &http->stmt, NULL );
+	sqlite3_result = sqlite3_prepare( http->sqlite_handle, query, -1, &http->stmt, NULL );
+	if ( sqlite3_result != SQLITE_OK )
+	{
+		return 0;
+	}
+
 	while ( sqlite3_step( http->stmt ) != SQLITE_DONE )
 	{
 		count++;
@@ -184,6 +190,7 @@ void http_sqlite_moved_check( struct HTTP* http )
 		free( http->header->originalQuery );
 		http->header->originalQuery = new_string( (const char*)sqlite3_column_text( http->stmt, 1 ) );
 	}
+	sqlite3_finalize( http->stmt );
 
 	if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
 	{

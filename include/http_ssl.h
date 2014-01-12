@@ -14,8 +14,8 @@
 struct HTTP_SSL_Connection {
 	entropy_context		entropy;
 	ctr_drbg_context	ctr_drbg;
-	ssl_context				ssl;
-	ssl_session				ssl_sess;
+	ssl_context			ssl;
+	ssl_session			ssl_session;
 };
 
 #include "http_wrapper.h"

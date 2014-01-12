@@ -143,7 +143,7 @@ struct HTTP{
 	// struct HTTP_POST_FORM_MULTIPART_DATA* post_form_multipart_data;
 	struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* post_form_urlencoded_data;
 
-	sqlite3*			sqlite_handle;
+	sqlite3* sqlite_handle;
 	sqlite3_stmt* stmt;
 
 	firedns_state firedns;

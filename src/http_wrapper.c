@@ -145,7 +145,10 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
 	{
 		http_alloc( http, HTTP_RESET );
 
-		sqlite3_open( HTTP_SQLITE_DB, &http->sqlite_handle );
+		if ( sqlite3_open( HTTP_SQLITE_DB, &http->sqlite_handle ) != SQLITE_OK )
+		{
+			fprintf( stderr, "Open sqlite file '%s' failed. All database features will be ignored", HTTP_SQLITE_DB );
+		}
 
 		http_sqlite_db_create( http );
 		http_sqlite_db_startup( http );
