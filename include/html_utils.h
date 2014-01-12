@@ -4,12 +4,12 @@
 #include "html_tags.h"
 
 #define HTML_LIST_FOREACH( list, listIt )\
-          if ( list != NULL )\
-            for ( listIt = list ; listIt->tag != NULL ; listIt = listIt->next )
+					if ( list != NULL )\
+						for ( listIt = list ; listIt->tag != NULL ; listIt = listIt->next )
 
 struct HTML_LIST{
-  struct HTML_TAG* tag;
-  struct HTML_LIST* next;
+	struct HTML_TAG* tag;
+	struct HTML_LIST* next;
 };
 
 int html_min( int a, int b );

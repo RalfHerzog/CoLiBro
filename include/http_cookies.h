@@ -9,29 +9,29 @@ struct HTTP;
 struct HTTP_BOOL;
 
 enum HTTP_COOKIE_FIELD {
-  HTTP_COOKIE_NAME,
-  HTTP_COOKIE_VALUE,
-  HTTP_COOKIE_DOMAIN,
-  HTTP_COOKIE_PATH,
-  HTTP_COOKIE_EXPIRES,
-  HTTP_COOKIE_SECURE,
-  HTTP_COOKIE_HTTP_ONLY
+	HTTP_COOKIE_NAME,
+	HTTP_COOKIE_VALUE,
+	HTTP_COOKIE_DOMAIN,
+	HTTP_COOKIE_PATH,
+	HTTP_COOKIE_EXPIRES,
+	HTTP_COOKIE_SECURE,
+	HTTP_COOKIE_HTTP_ONLY
 };
 
 struct HTTP_COOKIE{
-  char* name;
-  char* value;
-  char* domain;
-  char* path;
-  char* expires;
-  char* secure;
-  char* http_only;
-  struct HTTP_COOKIE* next;
+	char* name;
+	char* value;
+	char* domain;
+	char* path;
+	char* expires;
+	char* secure;
+	char* http_only;
+	struct HTTP_COOKIE* next;
 };
 
 struct HTTP_COOKIE_ITERATOR{
-  struct HTTP_COOKIE* current;
-  struct HTTP* http;
+	struct HTTP_COOKIE* current;
+	struct HTTP* http;
 };
 
 //void http_header_cookie_iterator_init( struct HTTP_COOKIE_ITERATOR* it, struct HTTP_COOKIE* cookies );
@@ -39,9 +39,10 @@ struct HTTP_COOKIE_ITERATOR{
 //struct HTTP_COOKIE* http_header_cookie_iterator_next( struct HTTP_COOKIE_ITERATOR* it );
 //void http_header_cookie_iterator_free( struct HTTP_COOKIE_ITERATOR* it );
 
-unsigned char http_header_cookie_user_add( struct HTTP* http, 
-  const char* name, const char* value, const char* domain, const char* path,
-  const char* expires, unsigned char secure, unsigned char http_only );
+unsigned char http_header_cookie_user_add( struct HTTP* http,
+	const char* name, const char* value, const char* domain, const char* path,
+	const char* expires, unsigned char secure, unsigned char http_only
+);
 
 /** Should not be used, only to be visible in extern sources */
 extern void http_header_cookie_add( struct HTTP* http, const char* line );

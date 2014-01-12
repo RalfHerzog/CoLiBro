@@ -12,10 +12,10 @@
 #include <polarssl/error.h>
 
 struct HTTP_SSL_Connection {
-  entropy_context   entropy;
-  ctr_drbg_context  ctr_drbg;
-  ssl_context       ssl;
-  ssl_session       ssl_sess;
+	entropy_context		entropy;
+	ctr_drbg_context	ctr_drbg;
+	ssl_context				ssl;
+	ssl_session				ssl_sess;
 };
 
 #include "http_wrapper.h"

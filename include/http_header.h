@@ -11,75 +11,75 @@
 
 #define HTTP_HEADER_MAX_FIELD_SIZE 10024
 
-#define HTTP_HEADER_INIT  0x0100
+#define HTTP_HEADER_INIT	0x0100
 #define HTTP_HEADER_RESET 0x0200
-#define HTTP_HEADER_FREE  0x0400
+#define HTTP_HEADER_FREE	0x0400
 #define HTTP_HEADER_FREE_WITHOUT_PERSISTENT_DATA 0x0800
 
 #define HTTP_HEADER_STATUS_VERSION_SIZE 8
-#define HTTP_HEADER_STATUS_ID_SIZE      3
+#define HTTP_HEADER_STATUS_ID_SIZE			3
 
 #ifndef HTTP_HEADER_USER_AGENT_MOBILE
-  #define HTTP_HEADER_USER_AGENT_MOBILE  "CoLiBro/1.0 (Other; U; Other; de-de ) Version/1.0 Mobile/1.0 CommandLineBrowser/1.0.1"
+	#define HTTP_HEADER_USER_AGENT_MOBILE	 "CoLiBro/1.0 (Other; U; Other; de-de ) Version/1.0 Mobile/1.0 CommandLineBrowser/1.0.1"
 #endif
 
 #ifndef HTTP_HEADER_USER_AGENT_DESKTOP
-  #if defined _WIN32
-    #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Windows; U; Windows NT 5.1 x86; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
-  #elif defined _WIN64
-    #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Windows; U; Windows NT 5.1 x86; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
-  #elif defined __linux
-    #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (X11; Linux x86_64; U; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
-  #else
-    #define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Other; Other; U; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
-  #endif
+	#if defined _WIN32
+		#define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Windows; U; Windows NT 5.1 x86; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
+	#elif defined _WIN64
+		#define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Windows; U; Windows NT 5.1 x86; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
+	#elif defined __linux
+		#define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (X11; Linux x86_64; U; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
+	#else
+		#define HTTP_HEADER_USER_AGENT_DESKTOP "CoLiBro/1.0 (Other; Other; U; de-de) Version/1.0 Desktop/1.0 CommandLineBrowser/1.0.1"
+	#endif
 #endif
 
 #ifndef HTTP_HEADER_USER_AGENT_DESKTOP_MOZILLA
-  #define HTTP_HEADER_USER_AGENT_DESKTOP_MOZILLA "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:20.0) Gecko/20100101 Firefox/20.0"
+	#define HTTP_HEADER_USER_AGENT_DESKTOP_MOZILLA "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:20.0) Gecko/20100101 Firefox/20.0"
 #endif
 
 struct HTTP;
 
 struct HTTP_HEADER_FIELD_ITERATOR{
-  struct HTTP_HEADER_FIELD* current;
-  struct HTTP* http;
+	struct HTTP_HEADER_FIELD* current;
+	struct HTTP* http;
 };
 
 struct HTTP_HEADER_FIELD{
-  char* key;
-  char* value;
-  char* domain;
-  unsigned char state;
-  struct HTTP_HEADER_FIELD* next;
+	char* key;
+	char* value;
+	char* domain;
+	unsigned char state;
+	struct HTTP_HEADER_FIELD* next;
 };
 
 struct HTTP_HEADER_STATUS {
-  int   responseId;
-  char* responseText;
-  char* version;
+	int		responseId;
+	char* responseText;
+	char* version;
 };
 
 struct HTTP_HEADER {
-  struct HTTP_HEADER_STATUS status;
-  char* method;
-  char* remote_file;
-  char* arguments;
-  char* server;
-  char* connection_state;
-  int   content_length;
-  char* content_type;
-  char* content_encoding;  /* eg. Gzip */
-  char* transfer_encoding; /* chunked */
-  char* location;
-  char* user_agent;
-  char* www_authenticate;
+	struct HTTP_HEADER_STATUS status;
+	char* method;
+	char* remote_file;
+	char* arguments;
+	char* server;
+	char* connection_state;
+	int		content_length;
+	char* content_type;
+	char* content_encoding;	 /* eg. Gzip */
+	char* transfer_encoding; /* chunked */
+	char* location;
+	char* user_agent;
+	char* www_authenticate;
 
-  char* originalQuery;
+	char* originalQuery;
 
-  struct HTTP_COOKIE* cookies;
-  struct HTTP_HEADER_FIELD additional_client_fields;
-  struct HTTP_HEADER_FIELD additional_server_fields;
+	struct HTTP_COOKIE* cookies;
+	struct HTTP_HEADER_FIELD additional_client_fields;
+	struct HTTP_HEADER_FIELD additional_server_fields;
 };
 
 void http_header_init( struct HTTP_HEADER** header, unsigned int reset );

@@ -10,15 +10,15 @@ struct HTML_TAG;
 #include "http_utils.h"
 
 enum HTML_OPTIONS {
-  HTML_OPTION_EXTENDED_PARAMS = 0,
-  HTML_OPTION_CHARSET = 1
+	HTML_OPTION_EXTENDED_PARAMS = 0,
+	HTML_OPTION_CHARSET = 1
 };
 
 struct HTML{
-  unsigned long options;
-  char* content;
-  struct HTML_TAG* tags;
-  struct HTML_TAG* endTag;
+	unsigned long options;
+	char* content;
+	struct HTML_TAG* tags;
+	struct HTML_TAG* endTag;
 };
 
 void html_init( struct HTML* html );

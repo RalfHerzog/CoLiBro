@@ -13,7 +13,7 @@
 #define ENABLE_ZLIB_DEFLATE -15
 
 unsigned char inflateData ( unsigned char** ucomp, int* usize,
-                  const unsigned char* comp, const int csize );
+									const unsigned char* comp, const int csize );
 char* base64_string_encode( char* input, unsigned int length );
 
 #endif // HTTP_COMPRESSION_H_INCLUDED
