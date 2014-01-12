@@ -11,7 +11,7 @@ void http_reconnect( struct HTTP* http, const char* sNewHost, const unsigned sho
 void http_get_authorization_password( struct HTTP* http, char** str );
 int http_save_data_to_file( struct HTTP* http, const char* file );
 
-void http_print_errorcode(	struct HTTP* http )
+void http_print_errorcode( struct HTTP* http )
 {
 	int length;
 	char* text;
@@ -23,7 +23,7 @@ void http_print_errorcode(	struct HTTP* http )
 	length = 200;
 	text = (char*)malloc( length );
 
-	if ( http->header->status.responseId != 0 )
+	if ( http->header != NULL && http->header->status.responseId != 0 )
 	{
 		printf( "\n\nLast header: %i %s\n", http->header->status.responseId, http->header->status.responseText );
 	}
@@ -83,10 +83,13 @@ void http_print_errorcode(	struct HTTP* http )
 			break;
 		case HTTP_ERROR_POST_METHOD_UNKNOWN:
 			snprintf( text, length, "HTTP_ERROR_POST_METHOD_UNKNOWN: Unknown post method detected" );
+			break;
 		case HTTP_ERROR_SSL_INIT_FAILED:
 			snprintf( text, length, "HTTP_ERROR_SSL_INIT_FAILED: Initialization of (polarssl's) ssl-socket failed" );
+			break;
 		case HTTP_ERROR_SSL_ENTROPY_INIT_FAILED:
 			snprintf( text, length, "HTTP_ERROR_SSL_ENTROPY_INIT_FAILED: Initialization of (polarssl's) ssl entropy failed" );
+			break;
 		default:
 			snprintf( text, length, "ERROR: %i %s", http->header->status.responseId, http->header->status.responseText );
 			break;
@@ -142,9 +145,6 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
 	{
 		http_alloc( http, HTTP_RESET );
 
-		firedns_init( &http->firedns );
-		firedns_add_server( &http->firedns, "8.8.8.8" );
-
 		sqlite3_open( HTTP_SQLITE_DB, &http->sqlite_handle );
 
 		http_sqlite_db_create( http );
@@ -154,6 +154,12 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
 		http_set_opt( http, HTTP_OPTION_POST_DATA_RELEASE, 1 );
 
 		http_header_init( &http->header, HTTP_HEADER_INIT );
+
+		firedns_init( &http->firedns );
+		if ( firedns_add_servers_from_resolv_conf( &http->firedns ) > 0 )
+		{
+			firedns_add_server( &http->firedns, "8.8.8.8" );
+		}
 
 #if defined _WIN32 || defined _WIN64
 		WSADATA wsa;
@@ -1664,6 +1670,11 @@ void http_parse_link( struct HTTP* http )
 void http_get_page( struct HTTP* http, const char* link, char** content, int* size )
 {
 	char* header;
+
+	if ( http->error.errorId != 0 )
+	{
+		return;
+	}
 
 	if ( link == NULL || *link == '\0' )
 	{
