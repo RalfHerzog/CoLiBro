@@ -301,12 +301,6 @@ void http_connect( struct HTTP* http, const char* host, const unsigned short por
 }
 HTTP_BOOL http_get_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option )
 {
-	if ( http->error.errorId != 0 )
-	{
-		return 0;
-	}
-	http->last_result = 0;
-
 	return http->options & (1<<option) ? HTTP_BOOL_TRUE : HTTP_BOOL_FALSE;
 }
 void http_set_opt( struct HTTP* http, enum HTTP_OPTION_STATUS option, ... )
@@ -492,21 +486,25 @@ void http_prepare_header( struct HTTP* http, char** query )
 		memcpy( cookies, "Cookie: ", 8 );
 
 		sqlite3_prepare( http->sqlite_handle, sqlite_query, strlen( sqlite_query ), &http->stmt, NULL );
-		while ( sqlite3_step( http->stmt ) != SQLITE_DONE )
+		if ( http->stmt != NULL )
 		{
-			if( strstr( http->server, (const char*)(sqlite3_column_text( http->stmt, 0 )+1) ) )
+			while ( sqlite3_step( http->stmt ) != SQLITE_DONE )
 			{
-				if ( strlen( cookies ) > 8 )
+				if( strstr( http->server, (const char*)( sqlite3_column_text( http->stmt, 0 ) +1 ) ) )
 				{
-					strcat( cookies, "; " );
+					if ( strlen( cookies ) > 8 )
+					{
+						// Append ';' when we add more than one cookie
+						strcat( cookies, "; " );
+					}
+					strcat( cookies, (const char*)sqlite3_column_text( http->stmt, 2 ) ); // Cookie name
+					strcat( cookies, "=" );
+					strcat( cookies, (const char*)sqlite3_column_text( http->stmt, 3 ) ); // Cookie value
 				}
-				strcat( cookies, (const char*)sqlite3_column_text( http->stmt, 2 ) ); // Cookie name
-				strcat( cookies, "=" );
-				strcat( cookies, (const char*)sqlite3_column_text( http->stmt, 3 ) ); // Cookie value
 			}
+			sqlite3_finalize( http->stmt );
+			sqlite3_free( sqlite_query );
 		}
-		sqlite3_finalize( http->stmt );
-		sqlite3_free( sqlite_query );
 
 		if ( strlen( cookies ) > 8 )
 		{
@@ -1350,10 +1348,10 @@ void http_reconnect( struct HTTP* http, const char* sNewHost, const unsigned sho
 
 	if ( http->server != NULL )
 	{
-		if (    strcmpi( http->server, sNewHost ) ||
-                http_get_opt( http, HTTP_OPTION_HOST_CHANGED ) == HTTP_BOOL_TRUE ||
-                http_get_opt( http, HTTP_OPTION_POTOCOL_CHANGED ) == HTTP_BOOL_TRUE
-        )
+		if (		strcmpi( http->server, sNewHost ) ||
+								http_get_opt( http, HTTP_OPTION_HOST_CHANGED ) == HTTP_BOOL_TRUE ||
+								http_get_opt( http, HTTP_OPTION_POTOCOL_CHANGED ) == HTTP_BOOL_TRUE
+				)
 		{
 			if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )
 			{
@@ -1697,10 +1695,10 @@ void http_get_page( struct HTTP* http, const char* link, char** content, int* si
 
 	http_recv_content( http, content, size );
 
-	if (    http->error.errorId == HTTP_ERROR_RECV_ERROR ||
-            http->error.errorId == HTTP_ERROR_RAW_SEND_ERROR ||
-            http->error.errorId == HTTP_ERROR_RAW_RECV_ERROR
-    )
+	if (		http->error.errorId == HTTP_ERROR_RECV_ERROR ||
+						http->error.errorId == HTTP_ERROR_RAW_SEND_ERROR ||
+						http->error.errorId == HTTP_ERROR_RAW_RECV_ERROR
+		)
 	{
 		/** Try to reconnect and query again */
 		if ( http_get_opt( http, HTTP_OPTION_VERBOSE ) )

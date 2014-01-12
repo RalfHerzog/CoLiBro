@@ -14,7 +14,7 @@ void http_ssl_connect( struct HTTP* http )
 		return;
 	}
 
-	memset( &http->ssl.ssl_sess, 0, sizeof( ssl_session ) );
+	memset( &http->ssl.ssl_session, 0, sizeof( ssl_session ) );
 	memset( &http->ssl.ssl, 0, sizeof( ssl_context ) );
 
 	http_raw_connect( http );
@@ -42,7 +42,7 @@ void http_ssl_connect( struct HTTP* http )
 	ssl_set_dbg( &http->ssl.ssl, NULL, stdout );
 	ssl_set_bio( &http->ssl.ssl, net_recv, &http->socket, net_send, &http->socket );
 
-	ssl_set_session( &http->ssl.ssl, &http->ssl.ssl_sess );
+	ssl_set_session( &http->ssl.ssl, &http->ssl.ssl_session );
 }
 int http_ssl_recv( struct HTTP* http, void *__buf, size_t __n )
 {
@@ -55,6 +55,12 @@ int http_ssl_send( struct HTTP* http, const char *__buf, size_t __n )
 void http_ssl_close( struct HTTP* http )
 {
 	net_close( http->socket );
+
 	ssl_free( &http->ssl.ssl );
-	memset( &http->ssl.ssl, 0, sizeof( http->ssl.ssl ) );
+	ssl_session_free( &http->ssl.ssl_session );
+
+	memset( &http->ssl.ctr_drbg, 0, sizeof( ctr_drbg_context ) );
+	memset( &http->ssl.entropy, 0, sizeof( entropy_context ) );
+
+	http->header->connection_state = NULL;
 }
