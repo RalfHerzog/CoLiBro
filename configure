@@ -193,7 +193,7 @@ all: \$(ALL_LIBS) \$(EXTERN_LIBS_MAKE)
 	@echo \"\"
 	@echo \"----------------------------------\"
 	@echo \"Link your application with:\"
-	@echo \"      '-lcolibro -lfiredns -lsqlite3 -lz -lpolarssl -lm'\"
+	@echo \"      '-lcolibro -lsqlite3 -lz -lm'\"
 	@echo \"----------------------------------\"
 
 examples: \$(EXBINS)
@@ -223,7 +223,7 @@ extern/%%/_clean:
 \$(local_lib)/libcolibro.a: \$(OBJS)
 	rm -f \$@
 	mkdir -p \$(local_lib)
-	\$(AR) cr \$@ \$(OBJS)
+	\$(AR) cr \$@ `find . -name "*.o"`
 	\$(RANLIB) \$@
 
 \$(DESTDIR)\$(bindir)/%%: tools/%%
