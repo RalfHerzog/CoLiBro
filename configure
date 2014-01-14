@@ -223,7 +223,7 @@ extern/%%/_clean:
 \$(local_lib)/libcolibro.a: \$(OBJS)
 	rm -f \$@
 	mkdir -p \$(local_lib)
-	\$(AR) cr \$@ `find . -name "*.o"`
+	\$(AR) cr \$@ \$(OBJS) \`find \$(externlibsdir)/ -name \"*.o\"\`
 	\$(RANLIB) \$@
 
 \$(DESTDIR)\$(bindir)/%%: tools/%%

@@ -10,35 +10,42 @@ int main()
 	struct HTML_LIST* list;
 	struct HTML_LIST* list_it;
 
-	char* content;
+	char* content, *html_a;
 	int size;
 
 	http_init( &http );
 
 	http_set_opt( &http, HTTP_OPTION_VERBOSE, HTTP_BOOL_TRUE );
-	http_set_opt( &http, HTTP_OPTION_DOWNLOAD_FILES, 1 );
+	// http_set_opt( &http, HTTP_OPTION_DOWNLOAD_FILES, 1 );
 	http_set_opt( &http, HTTP_OPTION_USER_AGENT_MOBILE, 1 );
+	http_set_opt( &http, HTTP_OPTION_LOG_ENABLED, 1 );
+	http_set_opt( &http, HTTP_OPTION_LOG_RESPONSE, 1 );
+	http_set_opt( &http, HTTP_OPTION_LOG_OVERWRITE, 1 );
 
 	http_get_page( &http, "https://www.google.com/", &content, &size );
-
 	http_free( &http );
+
+	printf( "Received %i bytes of data\n\n", size );
 
 	html_init( &html );
 	html_parse( &html, content );
-
-	html_list_create( html.tags, html.tags->end, "a", &list );
-	HTML_LIST_FOREACH( list, list_it )
+	if ( html.tags != NULL )
 	{
-		fwrite( content+(list_it->tag->textStart), 1, list_it->tag->textLength, stdout );
-		printf("\n");
+		html_list_create( html.tags, html.tags->end, "a", &list );
+		HTML_LIST_FOREACH( list, list_it )
+		{
+			html_a = html_tag_get_content( &html, list_it->tag );
+			if ( html_a != NULL )
+			{
+				printf("%s\n", html_a);
+				fflush( stdout );
+				free( html_a );
+			}
+		}
 	}
-
 	html_free( &html );
 
-	//printf("%s\n", content);
 	free( content );
-
-
 	return 0;
 }
 
