@@ -189,6 +189,9 @@ EXTERN_LIBS_MAKE := \$(addsuffix /_make, \$(wildcard \$(externlibsdir)/*))
 EXTERN_LIBS_CLEAN := \$(addsuffix /_clean, \$(wildcard \$(externlibsdir)/*))
 
 all: \$(ALL_LIBS) \$(EXTERN_LIBS_MAKE)
+	\$(AR) cr \$@ \$(OBJS) \`find \$(externlibsdir)/ -name \"*.o\"\`
+	\$(RANLIB) \$@
+
 	@echo \"Build complete\"
 	@echo \"\"
 	@echo \"----------------------------------\"
@@ -223,8 +226,6 @@ extern/%%/_clean:
 \$(local_lib)/libcolibro.a: \$(OBJS)
 	rm -f \$@
 	mkdir -p \$(local_lib)
-	\$(AR) cr \$@ \$(OBJS) \`find \$(externlibsdir)/ -name \"*.o\"\`
-	\$(RANLIB) \$@
 
 \$(DESTDIR)\$(bindir)/%%: tools/%%
 	install -D \$< \$@
