@@ -870,6 +870,11 @@ void __http_send_request_data( struct HTTP* http, const char* header_static )
 	char* header_remaining_data;
 	char* content_type = NULL;
 	char* post_data_size_str;
+	
+	if ( http->error.errorId != 0 )
+	{
+		return;
+	}
 
 	http_raw_send( http, header_static, strlen( header_static ) );
 
