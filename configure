@@ -23,9 +23,9 @@ COLIBRO_LIB_DIR=lib
 COLIBRO_INC_DIR=include
 EXTERN_LIBS_DIR=extern
 
-libs_required=("sqlite3" "zlib" "polarssl" "firedns" "math")
+libs_required=("sqlite3" "zlib" "polarssl" "math")
 # -1 = system
-libs_version=("3.7.9" "1.2.3.4" "1.3.1" "1.0" "-1")
+libs_version=("3.7.9" "1.2.3.4" "1.3.1" "-1")
 libs_count=${#libs_required[*]}
 
 lib_dir="/usr/include"
@@ -170,9 +170,8 @@ EXOBJS := \$(EXSRCS:.c=.o)
 EXBINS := \$(EXSRCS:.c=)
 
 EXTERN_LIBS_INC := \$(addprefix -I, \$(wildcard \$(externlibsdir)/*/include))
-# EXTRALIBS := ./extra-libs/polarssl/include
 
-CFLAGS  = -Os -std=c99 -D_GNU_SOURCE
+CFLAGS  = -O3
 
 # Add more extra-libs here
 INC     = -I./include \$(EXTERN_LIBS_INC)
@@ -182,15 +181,15 @@ OBJCOPY = \$(CROSS_COMPILE)objcopy
 
 ALL_INCLUDES := \$(sort \$(wildcard include/*.h include/*/*.h))
 
-MY_LIBS = \$(local_lib)/libcolibro.a
-ALL_LIBS = \$(MY_LIBS)
+MY_LIB = \$(local_lib)/libcolibro.a
+ALL_LIBS = \$(MY_LIB)
 
 EXTERN_LIBS_MAKE := \$(addsuffix /_make, \$(wildcard \$(externlibsdir)/*))
 EXTERN_LIBS_CLEAN := \$(addsuffix /_clean, \$(wildcard \$(externlibsdir)/*))
 
 all: \$(ALL_LIBS) \$(EXTERN_LIBS_MAKE)
-	\$(AR) cr \$@ \$(OBJS) \`find \$(externlibsdir)/ -name \"*.o\"\`
-	\$(RANLIB) \$@
+	\$(AR) cr \$(MY_LIB) \$(OBJS) \`find \$(externlibsdir)/ -name \"*.o\"\`
+	\$(RANLIB) \$(MY_LIB)
 
 	@echo \"Build complete\"
 	@echo \"\"

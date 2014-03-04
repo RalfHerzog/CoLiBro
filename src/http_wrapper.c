@@ -158,12 +158,6 @@ void http_alloc( struct HTTP* http, HTTP_HEX reset )
 
 		http_header_init( &http->header, HTTP_HEADER_INIT );
 
-		firedns_init( &http->firedns );
-		if ( firedns_add_servers_from_resolv_conf( &http->firedns ) > 0 )
-		{
-			firedns_add_server( &http->firedns, "8.8.8.8" );
-		}
-
 #if defined _WIN32 || defined _WIN64
 		WSADATA wsa;
 		WSAStartup( MAKEWORD( 2,0 ), &wsa );
@@ -241,8 +235,10 @@ void http_free( struct HTTP* http )
 
 void http_raw_connect( struct HTTP* http )
 {
-	http->dns_result = firedns_resolveip4( &http->firedns, http->server );
-	if ( http->dns_result == NULL )
+	#warning "TODO gethostbyname_r => TODO getaddrinfo"
+	http->hostent = gethostbyname( http->server );
+
+	if ( http->hostent == NULL )
 	{
 		http->error.errorId = HTTP_ERROR_HOST_LOOKUP_FAILURE;
 		http->error.line = __LINE__;
@@ -253,7 +249,7 @@ void http_raw_connect( struct HTTP* http )
 	memset( &http->addr, 0, sizeof( http->addr ) );
 
 	http->addr.sin_family = AF_INET;
-	memcpy( &http->addr.sin_addr.s_addr, &http->dns_result->s_addr, sizeof( http->dns_result->s_addr ) );
+	memcpy( &http->addr.sin_addr.s_addr, http->hostent->h_addr, http->hostent->h_length );
 	http->addr.sin_port = htons( http->port );
 
 	http->last_result = connect( http->socket, (struct sockaddr*)&http->addr, sizeof( http->addr ) );
@@ -901,7 +897,7 @@ void __http_send_request_data( struct HTTP* http, const char* header_static )
 			case HTTP_POST_METHOD_URLENCODED:
 				content_type = "application/x-www-form-urlencoded";
 
-				http->post_data_size = http_post_form_urlencoded_get_data( &http->post_data, http );
+				http->post_data_size = http_post_form_urlencoded_get_data( http, &http->post_data );
 
 				if ( http->post_data_size == 0 )
 				{
@@ -1840,7 +1836,7 @@ void http_write_memory_dump( struct HTTP* http, FILE* fFile )
 	fprintf( fFile, "port: %i\n", http->port );
 	fprintf( fFile, "server: %s\n", http->server );
 	fprintf( fFile, "download_folder: %s\n", http->download_folder );
-	fprintf( fFile, "firedns address: %p\n", &http->firedns );
+	fprintf( fFile, "hostent address: %p\n", &http->hostent );
 	fprintf( fFile, "addr: %p\n", &http->addr );
 
 	fprintf( fFile, "\n-------HTTP-Header-Section-------\n" );

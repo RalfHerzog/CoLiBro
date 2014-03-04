@@ -27,7 +27,6 @@
 #include "http_sqlite.h"
 #include "http_post.h"
 #include "getch.h"
-#include "firedns.h"
 
 #define HTTP_PORT 80
 #define HTTP_HEADER_NEWLINE "\r\n\0"
@@ -127,8 +126,8 @@ struct HTTP{
 	char* post_data;
 	unsigned int post_data_size;
 
-	struct in_addr* dns_result;
 	struct sockaddr_in addr;
+	struct hostent* hostent;
 
 	struct HTTP_ERROR error;
 	struct HTTP_HEADER* header;
@@ -146,8 +145,6 @@ struct HTTP{
 
 	sqlite3* sqlite_handle;
 	sqlite3_stmt* stmt;
-
-	firedns_state firedns;
 
 	/** Function pointer */
 	void (*connect_func)(struct HTTP*);

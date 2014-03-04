@@ -7,7 +7,7 @@ POLARSSL_PATH=polarssl-${POLARSSL_VERSION}
 POLARSSL_FILE=${POLARSSL_PATH}-gpl.tgz
 POLARSSL_SYMLINK=polarssl
 
-FIREDNS_PATH=firedns
+# FIREDNS_PATH=firedns
 
 if [ ! -d ${EXTERN_LIBS_DIR} ]
 then
@@ -28,12 +28,12 @@ then
   printf "done\n"
 fi
 
-if [ ! -d ${FIREDNS_PATH} ]
-then
-  printf "Downloading firedns ... \n"
-  git clone https://github.com/rofl0r/firedns ${FIREDNS_PATH}
-  printf "done\n"
-fi
+# if [ ! -d ${FIREDNS_PATH} ]
+# then
+#   printf "Downloading firedns ... \n"
+#   git clone https://github.com/rofl0r/firedns ${FIREDNS_PATH}
+#   printf "done\n"
+# fi
 
 cd ..
 

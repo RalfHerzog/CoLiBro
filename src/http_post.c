@@ -1,6 +1,6 @@
 #include "http_post.h"
 
-int http_post_encode(char **dest, const unsigned char *src, int length)
+int http_post_encode( char **dest, const unsigned char *src, int length )
 {
 	char *d;
 	int i;
@@ -56,7 +56,7 @@ unsigned char http_post_form_urlencoded_add( struct HTTP* http, const char* key,
 	return 1;
 }
 
-unsigned int http_post_form_urlencoded_get_data( char** content, struct HTTP* http )
+unsigned int http_post_form_urlencoded_get_data( struct HTTP* http, char** content )
 {
 	struct HTTP_POST_FORM_URLENCODED_DATA_ITEM* http_post_form_urlencoded_data_it;
 	unsigned int content_length;
